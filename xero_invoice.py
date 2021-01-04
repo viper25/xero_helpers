@@ -91,8 +91,8 @@ def get_ContactID(code = None):
 contacts = open("contacts.txt", "r")
 
 # For each member ID
-for contact in contacts:
-    _contactID = get_ContactID(contact[:4])
+for _contact in contacts:
+    _contactID = get_ContactID(_contact[:4])
     if _contactID:
 
         # Get all Invoices for this contact 
