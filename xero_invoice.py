@@ -102,7 +102,7 @@ for contact in contacts:
         invoices = xero_get(url,**_header)
 
         for invoice in invoices['Invoices']:
-            print(color(f"---------\nCustomer ID: {contact}",Colors.purple))
+            print(color(f"===============\nCustomer ID: {contact}",Colors.purple))
 
             # Only for FY 21 invoices
             if invoice['InvoiceNumber'].startswith('INV-21'):
