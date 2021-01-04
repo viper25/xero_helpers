@@ -127,3 +127,15 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+#Exclude all test files
+*test*.py
+
+# Tokens & Secrets
+my_secrets.py
+
+# VS Code setings
+.vscode/
+
+# Xero Refresh Token
+xero_refresh_token.txt
