@@ -15,7 +15,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger(__name__)
 
 # TODO Hardcoded Tenant ID
-xero_tenant_id = my_secrets.xero_DEMO_tenant_ID
+xero_tenant_id = my_secrets.xero_tenant_ID
    
 # ------------------------------------------------------
 # Refresh access_token. Use the refresh_token to keep the access_token "fresh" every 30 mins. 
