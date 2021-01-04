@@ -92,6 +92,7 @@ contacts = open("contacts.txt", "r")
 
 # For each member ID
 for _contact in contacts:
+    print(color(f"Processing {_contact[:4]}",Colors.white))
     _contactID = get_ContactID(_contact[:4])
     if _contactID:
 
@@ -102,7 +103,7 @@ for _contact in contacts:
         invoices = xero_get(url,**_header)
 
         for invoice in invoices['Invoices']:
-            print(color(f"===============\nCustomer ID: {_contact}",Colors.purple))
+            print(color(f"Customer ID: {_contact}",Colors.purple))
 
             # Only for FY 21 invoices
             if invoice['InvoiceNumber'].startswith('INV-21'):
