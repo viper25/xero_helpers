@@ -52,7 +52,11 @@ def xero_get(url, **extra_headers):
     if extra_headers: 
         _headers.update(extra_headers)
     response = requests.get(url,headers=_headers)
-    return response.json()
+    if response.status_code == 429:
+       print(color(f"Too many requests. Try after {response.headers._store['retry-after'][1]} seconds", Colors.red))  
+       raise
+    else:
+        return response.json()
 
 # Make the POST HTTP call to XERO API
 def xero_post(*args, **extra_headers):
