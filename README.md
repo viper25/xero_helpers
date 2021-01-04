@@ -1,5 +1,5 @@
 # xero_helpers
-Helper Scripts for Xero. Since one cann to bulk-update Xero invoices, use these helper script to do that. This script is not generic and is created for my specific needs which are:
+Helper Scripts for Xero. Since one can to bulk-update Xero invoices, use these helper script to do that. This script is not generic and is created for my specific needs:
 
 * Move a lot of AUTHORIZED invoices to DRAFT mode keeping the same Invoice numbers
 
