@@ -1,7 +1,8 @@
 # xero_helpers
 Helper Scripts for Xero. Since one can to bulk-update Xero invoices, use these helper script to do that. This script is not generic and is created for my specific needs:
 
-* Move a lot of AUTHORIZED invoices to DRAFT mode keeping the same Invoice numbers
+## Update Xero Invoice status 
+Move a lot of AUTHORIZED invoices to DRAFT mode keeping the same Invoice numbers. File is `xero_invoice.py`
 
 This is done by first renaming the original invoice (as we want to re-use the same invoice numbers), VOIDing them and then recreating them.
 
@@ -21,7 +22,10 @@ You should also have a file named `xero_refresh_token.txt` that contains your re
 
 All Contacts whose Authorzied invoices I wish to change are in a `contacts.txt` file. Change this to suit your needs.
 
-## Setup Python Environment
+## Invoices outstanding
+We keep all Xero invoices in "Draft" mode so as not to show them as Receiables in P&L and inflate revenue. But we need to know among these drafts, for all members, how many are oustanding on payments (as if the Invoices were in "Approved Mode"). This is needed to find eleigible members for GB. File is `payments_oustanding.py`
+
+### Setup Python Environment
 
 Setup your virtual environment. 
 ```bash
