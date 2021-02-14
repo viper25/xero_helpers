@@ -1,11 +1,12 @@
 import json
 import logging
-import string
 import my_secrets
 from datetime import date
 import datetime
+import time
 import requests
 import utils
+import csv
 # https://github.com/CodeForeverAndEver/ColorIt
 from colorit import *
 
@@ -54,8 +55,11 @@ def xero_get(url, **extra_headers):
         _headers.update(extra_headers)
     response = requests.get(url,headers=_headers)
     if response.status_code == 429:
-       print(color(f"Too many requests. Try after {response.headers._store['retry-after'][1]} seconds", Colors.red))  
-       raise
+       print(color(f"Too many requests. Trying after {int(response.headers._store['retry-after'][1]) + 5} seconds", Colors.red))  
+       time.sleep(int(response.headers._store['retry-after'][1]) + 5)
+       # Try ONCE more (assuming this time it DOESN'T error)
+       response = requests.get(url,headers=_headers)
+       return response.json()
     else:
         return response.json()
 
@@ -84,13 +88,21 @@ def get_ContactID(code = None):
         # https://developer.xero.com/documentation/api/contacts#optimised-queryparameters
         url = f'https://api.xero.com/api.xro/2.0/Contacts?where=AccountNumber=="{code}"'
         contacts = xero_get(url)
-        if len(contacts['Contacts'])>0:
-            return contacts['Contacts'][0]['ContactID']
+        if contacts:
+            if len(contacts['Contacts'])>0:
+                return contacts['Contacts'][0]['ContactID']
+            else:
+                return None
         else:
             return None
 
 def parse_Xero_Date(_date):
     return datetime.date.fromtimestamp(int(_date[6:-2].split('+')[0])/1000)
+
+def export_list(_members_outstanding):
+    with open('.csv', 'w') as f:
+        for key in _members_outstanding.keys():
+            f.write("%s,%s\n"%(key,_members_outstanding[key]))
 
 today = date.today()
 members_outstanding = {}
@@ -118,20 +130,29 @@ with open("contacts.txt", "r") as contacts:
                     if (invoice['Status'] == 'AUTHORISED') or (invoice['Status'] == 'DRAFT'):
                         percentage_Paid = invoice['AmountPaid']/invoice['Total']
                         percentage_days_of_year = (today - date(date.today().year, 1, 1)).days/365
-                        delta = abs(percentage_Paid - percentage_days_of_year)
-
+                        ''' 
+                        The lower the delta the better:
+                        If a member has paid half his dues (50%) by June (50% of the year) then delta = 0
+                        In this case he is 100% upto date in payments. If he's paid only 10% of his annual 
+                        dues by say Dec (~90%) then his delta is 0.9 - 0.1 = 0.8 (80%) which is > 50% 
+                        payment. Therefore he isn't eligible for GB in Dec.
+                        If he has paid 90% by say Jun (~50%) then delta = 0.5 - 0.9 = -40% which is < 50% 
+                        so he's eligible for GB in Jan
+                        '''
+                        delta = percentage_days_of_year - percentage_Paid
                         # A user hasn't paid > 50% of his dues taking into account time passed in the year
-                        if delta > my_secrets.payment_delta:
+                        if my_secrets.payment_delta < delta :
                             members_outstanding[_contact] = abs(percentage_Paid - percentage_days_of_year)
                             print(color(f"{_contact[:4]} is outstanding by {round(delta*100,1)} % ",Colors.red))
                             #print(f"{percentage_Paid} - {percentage_days_of_year} = {abs(percentage_Paid - percentage_days_of_year)}")
                         else:
                             print(color(f"{_contact[:4]} payment delta = {round(delta*100,1)} % ",Colors.blue))
-                            members_outstanding[_contact] = round(delta,1)
+                            members_outstanding[_contact] = round(delta,2)
                     elif invoice['Status'] == 'PAID':
-                        members_outstanding[_contact] = 0
+                        members_outstanding[_contact] = 0.00
                         print(color(f"{_contact[:4]} has cleared all dues ",Colors.green))
 
         print("---------------------------")
 
+export_list(members_outstanding)
 print("DONE")
