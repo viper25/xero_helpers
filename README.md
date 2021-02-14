@@ -25,6 +25,11 @@ All Contacts whose Authorzied invoices I wish to change are in a `contacts.txt` 
 ## Invoices outstanding
 We keep all Xero invoices in "Draft" mode so as not to show them as Receiables in P&L and inflate revenue. But we need to know among these drafts, for all members, how many are oustanding on payments (as if the Invoices were in "Approved Mode"). This is needed to find eleigible members for GB. File is `payments_oustanding.py`
 
+A CSV is generated. Users who have a payment delta of > 50% (or 0.5) are not eligible.
+
+![image](https://user-images.githubusercontent.com/327990/107588103-fee29880-6c3d-11eb-994e-5edce62d68ed.png)
+
+
 ### Setup Python Environment
 
 Setup your virtual environment. 
