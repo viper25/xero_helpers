@@ -63,23 +63,6 @@ def xero_get(url, **extra_headers):
     else:
         return response.json()
 
-# Make the POST HTTP call to XERO API
-def xero_post(*args, **extra_headers):
-    _headers = {
-        'Authorization': 'Bearer ' + xero_get_Access_Token(),
-        'Accept': 'application/json',
-        'Xero-tenant-id': xero_tenant_id
-    }
-    
-    if extra_headers: 
-        _headers.update(extra_headers)
-    try:
-        response = requests.post(args[0],headers=_headers,json=args[1])
-        return response
-    except Exception as e:
-        return "Error" + e
-        
-
 def get_ContactID(code = None):
     if code is None:
         url = 'https://api.xero.com/api.xro/2.0/Contacts'        
@@ -95,9 +78,6 @@ def get_ContactID(code = None):
                 return None
         else:
             return None
-
-def parse_Xero_Date(_date):
-    return datetime.date.fromtimestamp(int(_date[6:-2].split('+')[0])/1000)
 
 def export_list(_members_outstanding):
     with open('.csv', 'w') as f:
