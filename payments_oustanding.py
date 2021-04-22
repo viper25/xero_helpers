@@ -27,7 +27,7 @@ def get_ContactID(code = None):
             return None
 
 def export_list(_members_outstanding):
-    with open('.csv', 'w') as f:
+    with open('payments_oustanding.csv', 'w') as f:
         for key in _members_outstanding.keys():
             f.write("%s,%s\n"%(key,_members_outstanding[key]))
 
