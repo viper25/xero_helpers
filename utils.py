@@ -1,13 +1,8 @@
-import logging
 from datetime import date
 import datetime
 import os
 import requests
 import my_secrets
-
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
-logger = logging.getLogger(__name__)
-
 
 # TODO Hardcoded Tenant ID
 xero_tenant_id = my_secrets.xero_tenant_ID
@@ -61,3 +56,21 @@ def xero_get(url, **extra_headers):
        return response.json()
     else:
         return response.json()
+
+#-----------------------------------------------------------------------------------    
+
+# Make the POST HTTP call to XERO API
+def xero_post(*args, **extra_headers):
+    _headers = {
+        'Authorization': 'Bearer ' + xero_get_Access_Token(),
+        'Accept': 'application/json',
+        'Xero-tenant-id': xero_tenant_id
+    }
+    
+    if extra_headers: 
+        _headers.update(extra_headers)
+    try:
+        response = requests.post(args[0],headers=_headers,json=args[1])
+        return response
+    except Exception as e:
+        return "Error" + e

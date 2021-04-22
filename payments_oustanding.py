@@ -1,5 +1,4 @@
 import json
-import logging
 from datetime import date
 import datetime
 import time
@@ -11,10 +10,6 @@ from colorit import *
 # Use this to ensure that ColorIt will be usable by certain command line interfaces
 init_colorit()
 
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-   
 def get_ContactID(code = None):
     if code is None:
         url = 'https://api.xero.com/api.xro/2.0/Contacts'        
