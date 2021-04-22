@@ -1,10 +1,8 @@
 import json
 import logging
-import my_secrets
 from datetime import date
 import datetime
 import time
-import requests
 import utils
 import csv
 # https://github.com/CodeForeverAndEver/ColorIt
@@ -16,61 +14,15 @@ init_colorit()
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# TODO Hardcoded Tenant ID
-xero_tenant_id = my_secrets.xero_tenant_ID
    
-# ------------------------------------------------------
-# Refresh access_token. Use the refresh_token to keep the access_token "fresh" every 30 mins. 
-def xero_get_Access_Token():
-    cwd = os.getcwd()
-    f = open(f"{os.path.join(cwd,'xero_refresh_token.txt')}", 'r')
-    old_refresh_token = f.read()
-    f.close()
-    
-    url = 'https://identity.xero.com/connect/token'
-    response = requests.post(url,headers={
-        'Content-Type' : 'application/x-www-form-urlencoded'},data={
-            'grant_type': 'refresh_token',
-            'client_id' : my_secrets.xero_client_id,
-            'refresh_token': old_refresh_token
-            })
-    response_dict = response.json()
-    current_refresh_token = response_dict['refresh_token']
-
-    xero_output = open(f"{os.path.join(cwd,'xero_refresh_token.txt')}", 'w')
-    xero_output.write(current_refresh_token)
-    xero_output.close()
-    return response_dict['access_token']
-
-# Make the GET HTTP call to XERO API
-def xero_get(url, **extra_headers):
-    _headers = {
-        'Authorization': 'Bearer ' + xero_get_Access_Token(),
-        'Accept': 'application/json',
-        'Xero-tenant-id': xero_tenant_id
-    }
-    # Some API calls require adding the modified date to get just this year's transaction and 
-    # not from the very begining
-    if extra_headers: 
-        _headers.update(extra_headers)
-    response = requests.get(url,headers=_headers)
-    if response.status_code == 429:
-       print(color(f"Too many requests. Trying after {int(response.headers._store['retry-after'][1]) + 5} seconds", Colors.red))  
-       time.sleep(int(response.headers._store['retry-after'][1]) + 5)
-       # Try ONCE more (assuming this time it DOESN'T error)
-       response = requests.get(url,headers=_headers)
-       return response.json()
-    else:
-        return response.json()
-
 def get_ContactID(code = None):
     if code is None:
         url = 'https://api.xero.com/api.xro/2.0/Contacts'        
-        contacts = xero_get(url)
+        contacts = utils.xero_get(url)
     else:
         # https://developer.xero.com/documentation/api/contacts#optimised-queryparameters
         url = f'https://api.xero.com/api.xro/2.0/Contacts?where=AccountNumber=="{code}"'
-        contacts = xero_get(url)
+        contacts = utils.xero_get(url)
         if contacts:
             if len(contacts['Contacts'])>0:
                 return contacts['Contacts'][0]['ContactID']
@@ -100,7 +52,7 @@ with open("contacts.txt", "r") as contacts:
             url = f"https://api.xero.com/api.xro/2.0/Invoices?ContactIDs={_contactID}&Statuses=AUTHORISED,PAID,DRAFT"
             # Get Invoices Created only this year 
             _header = {'If-Modified-Since': utils.year_start()}
-            invoices = xero_get(url,**_header)
+            invoices = utils.xero_get(url,**_header)
 
             for invoice in invoices['Invoices']:
                 print(color(f"{invoice['InvoiceNumber']} ({invoice['Status']}) for {_contact}",Colors.white))
