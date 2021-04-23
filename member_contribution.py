@@ -105,7 +105,7 @@ df_grouped.to_csv('member_contributions_grouped.csv',index=True)
 # Ref: https://pbpython.com/pandas-pivot-table-explained.html
 # Pivot to show all Accounts in cols
 # The values column automatically averages the data so should change to sum. 
-df_pivoted = df_grouped.pivot_table(index="ContactName", columns="Account",values="LineAmount", aggfunc=np.sum)
+df_pivoted = df_grouped.pivot_table(index="ContactName", columns="Account",values="LineAmount", aggfunc=np.sum, fill_value=0)
 df_pivoted.to_csv('member_contributions_pivoted.csv',index=True)
 
 print(background(color(f"Done",(0,0,0)),Colors.green))
