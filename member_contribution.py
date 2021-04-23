@@ -29,8 +29,6 @@ lookup = pd.DataFrame({
         ]
     })
 
-def get_Account(code):
-    return "Empty"
 
 def get_member_txns(since_date):
     _member_txns = {}
