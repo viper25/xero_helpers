@@ -146,11 +146,10 @@ df_merged = pd.concat([df_payments, df_tnxs])
 df_merged.to_csv('member_contributions.csv',index=False)
 
 # Group by Contacts to show all payments from a member
-df_grouped = df_merged.groupby(["ContactID","ContactName","AccountCode","Account"]).sum()
-print(color(df_tnxs.head(5),Colors.white))
+df_grouped = df_merged.groupby(["ContactID","ContactName","AccountCode","Account"]).sum().reset_index()
 print(color(df_grouped.head(5),(200,200,200)))
 df_grouped.to_csv('member_contributions_grouped.csv',index=True)
-df_grouped.pivot_table(index=["ContactName","Account"]).to_csv('member_contributions_grouped-1.csv',index=True)
+# df_grouped.pivot_table(index=["ContactName","Account"]).to_csv('member_contributions_grouped-1.csv',index=True)
 
 # Ref: https://pbpython.com/pandas-pivot-table-explained.html
 # Pivot to show all Accounts in cols
