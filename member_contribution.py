@@ -2,7 +2,6 @@
 To get a matrix of all the members contributions for the year. This does NOT include 
 Invoice payments (i.e. member subscription payments)
 https://developer.xero.com/documentation/api/banktransactions#GET
-https://api-explorer.xero.com/accounting/banktransactions/getbanktransactions?query-where=BankAccount.Code%3D%3D%221000%22&query-page=1&header-if-modified-since=2021-04-20
 Up to 100 bank transactions will be returned per call, with line items shown for each transaction, when the page parameter is used e.g. page=1
 """
 
@@ -20,6 +19,7 @@ init_colorit()
 since_date = '2021-01-01'
 bank_accounts = {"DBS":"1000","NETS":"1001","Cash":"1002"}
 receive_txns = []
+receive_payments = []
 lookup = pd.DataFrame({
     'label':[
         "Member Subscription","Offertory","Holy Qurbana","Auction Sales","Birthday Offering","Baptism and wedding Offering","Catholicate Fund Donation","Good Friday Donation","Christmas Offering","Diocesan Development Fund","Metropolitan Fund ","Resisa Donation","Self Denial Fund","Marriage Assistance Fund","Seminary Fund","Mission Fund","Sunday School","Youth Fellowship Donations","Tithe","Annual Thanksgiving Auction","Annual Thanksgiving Donation","Other Revenue","Interest Income","St. Mary's League Income","Donations & Gifts"
@@ -29,8 +29,31 @@ lookup = pd.DataFrame({
         ]
     })
 
+# Operations on the Transactions DataFrame
+def cleanup_txns_df(_df_tnxs):
+    # Explode the Line Items col so that there's one ROW per Line Item.
+    _df_tnxs = _df_tnxs.explode('Line Items')
 
+    # Add the columns from exploded rows
+    # _df_tnxs["LineItem"] = _df_tnxs["Line Items"].apply(lambda x: x.get('Description'))
+    _df_tnxs["AccountCode"] = _df_tnxs["Line Items"].apply(lambda x: x.get('AccountCode'))
+    _df_tnxs["LineAmount"] = _df_tnxs["Line Items"].apply(lambda x: x.get('LineAmount'))
+
+    # Find a contact
+    # _df_tnxs.loc[_df_tnxs['ContactName'] == "Vibin Joseph Kuriakose"]
+
+    # Lookup and Account code and Add Account Desc
+    s = lookup.set_index('AccountCode')['label']
+    _df_tnxs["Account"] = _df_tnxs["AccountCode"].map(s)
+    
+    # Remove unwanted exploded dict col
+    _df_tnxs = _df_tnxs.drop(columns=["Line Items","BankAccount","Date","Net Amount"])
+
+    return _df_tnxs
+
+# https://api-explorer.xero.com/accounting/banktransactions/getbanktransactions?query-where=BankAccount.Code%3D%3D%221000%22&query-page=1&header-if-modified-since=2021-04-20
 def get_member_txns(since_date):
+    print(color(f"Processing Member Transactions\n================",Colors.blue))
     _member_txns = {}
     for bank_account in bank_accounts.items():
         # Reset page counter for each account (DBS, NETS etc.)
@@ -70,37 +93,64 @@ def get_member_txns(since_date):
         
     return receive_txns
 
+# https://api-explorer.xero.com/accounting/payments/getpayments?query-page=1&query-where=PaymentType%3D%22ACCRECPAYMENT%22&header-if-modified-since=2021-04-25
+def get_member_invoice_payments(since_date):
+    print(color(f"Processing Member Subscriptions\n================",Colors.blue))
+    _member_payments = {}
+    has_more_pages = True
+    page = 0
+    
+    # Go through pages (100 txns per page)
+    while has_more_pages:
+        page += 1
+        # This endpoint does not return payments applied to invoices, expense claims or transfers between bank accounts.
+        url = f'https://api.xero.com/api.xro/2.0/Payments?where=PaymentType="ACCRECPAYMENT"&page={page}'
+        _header = {'If-Modified-Since': since_date}
+        payments = utils.xero_get(url,**_header)
+        if len(payments['Payments']) == 0:
+            has_more_pages = False
+        else:
+            # Keep only "Type":"RECEIVE" & construct a dict via Python List Comprehension
+            _receive_payments = [
+                {
+                    # Build the output item
+                    "ContactID": _payments['Invoice']['Contact']['ContactID'],
+                    "ContactName": _payments['Invoice']['Contact']['Name'],
+                    "AccountCode": 3010,
+                    "LineAmount": _payments['Amount'],
+                    "Account": "Subscription"
+                } 
+                for _payments in payments['Payments'] 
+                if (
+                    # Only those tnxs that are payments to STOSC
+                    _payments['Status'] == 'AUTHORISED' and 
+                    _payments['IsReconciled'] == True
+                    )]
+            receive_payments.extend(_receive_payments)
+    return receive_payments
+
+
+list_invoice_payments = get_member_invoice_payments(since_date)
 list_all_txns = get_member_txns(since_date)
 
-# Explode the Line Items col so that there's one ROW per Line Item.
-df = pd.DataFrame(list_all_txns)
-df = df.explode('Line Items')
+# Make DataFrames
+df_tnxs = pd.DataFrame(list_all_txns)
+df_payments = pd.DataFrame(list_invoice_payments)
 
-# Add the columns from exploded rows
-df["LineItem"] = df["Line Items"].apply(lambda x: x.get('Description'))
-df["AccountCode"] = df["Line Items"].apply(lambda x: x.get('AccountCode'))
-df["LineAmount"] = df["Line Items"].apply(lambda x: x.get('LineAmount'))
+df_tnxs = cleanup_txns_df(df_tnxs)
 
-# Find a contact
-# df.loc[df['ContactName'] == "Vibin Joseph Kuriakose"]
-
-# Lookup and Account code and Add Account Desc
-s = lookup.set_index('AccountCode')['label']
-df["Account"] = df["AccountCode"].map(s)
- 
-# Remove unwanted exploded dict col
-df = df.drop(columns=["Line Items"])
+# Merge Subscription Payments and Transaction Data Frames
+df_merged = pd.concat([df_payments, df_tnxs])
 
 # Save to CSV
-df = df.drop(columns=["BankAccount","Date","Net Amount"])
-df.to_csv('member_contributions.csv',index=False)
+df_merged.to_csv('member_contributions.csv',index=False)
 
 # Group by Contacts to show all payments from a member
-df_grouped = df.groupby(["ContactID","ContactName","AccountCode","Account"]).sum()
-print(color(df.head(5),Colors.white))
+df_grouped = df_merged.groupby(["ContactID","ContactName","AccountCode","Account"]).sum()
+print(color(df_tnxs.head(5),Colors.white))
 print(color(df_grouped.head(5),(200,200,200)))
 df_grouped.to_csv('member_contributions_grouped.csv',index=True)
-#df_grouped.pivot_table(index=["ContactName","Account"]).to_csv('member_contributions_grouped-1.csv',index=True)
+df_grouped.pivot_table(index=["ContactName","Account"]).to_csv('member_contributions_grouped-1.csv',index=True)
 
 # Ref: https://pbpython.com/pandas-pivot-table-explained.html
 # Pivot to show all Accounts in cols
