@@ -12,10 +12,15 @@ from colorit import *
 import csv
 import pandas as pd
 import numpy as np
+import boto3
+from decimal import Decimal
+import my_secrets
 
 # Use this to ensure that ColorIt will be usable by certain command line interfaces
 init_colorit()
 
+# ===============================================================
+# VARIABLES & CONFIGURATION
 since_date = '2021-01-01'
 bank_accounts = {"DBS":"1000","NETS":"1001","Cash":"1002"}
 receive_txns = []
@@ -28,6 +33,17 @@ lookup = pd.DataFrame({
         "3010","3020","3030","3040","3050","3060","3070","3080","3090","3100","3110","3120","3130","3140","3150","3160","3170","3180","3190","3200","3210","3220","3230","3240","3250"
         ]
     })
+write_to_csv = False
+# ===============================================================
+
+def upload_to_ddb(df_records):
+    resource = boto3.resource('dynamodb', aws_access_key_id=my_secrets.DDB_ACCESS_KEY_ID, aws_secret_access_key=my_secrets.DDB_SECRET_ACCESS_KEY, region_name='ap-southeast-1')
+    table = resource.Table('member_payments')
+
+    print(color(f"Inserting {len(df_records)} records to DDB",Colors.green))
+    for index, row in df_records.iterrows():
+        chunk = {"ContactID":row[0], "ContactName":row[1], 'AccountCode':row[2],'Account':row[3],'LineAmount':Decimal(str(row[4]))}
+        table.put_item(Item=chunk)
 
 # Operations on the Transactions DataFrame
 def cleanup_txns_df(_df_tnxs):
@@ -116,7 +132,7 @@ def get_member_invoice_payments(since_date):
                     # Build the output item
                     "ContactID": _payments['Invoice']['Contact']['ContactID'],
                     "ContactName": _payments['Invoice']['Contact']['Name'],
-                    "AccountCode": 3010,
+                    "AccountCode": '3010',
                     "LineAmount": _payments['Amount'],
                     "Account": "Subscription"
                 } 
@@ -143,18 +159,23 @@ df_tnxs = cleanup_txns_df(df_tnxs)
 df_merged = pd.concat([df_payments, df_tnxs])
 
 # Save to CSV
-df_merged.to_csv('member_contributions.csv',index=False)
+if write_to_csv:
+    df_merged.to_csv('member_contributions.csv',index=False)
 
 # Group by Contacts to show all payments from a member
 df_grouped = df_merged.groupby(["ContactID","ContactName","AccountCode","Account"]).sum().reset_index()
 print(color(df_grouped.head(5),(200,200,200)))
-df_grouped.to_csv('member_contributions_grouped.csv',index=True)
+if write_to_csv:
+    df_grouped.to_csv('member_contributions_grouped.csv',index=True)
 # df_grouped.pivot_table(index=["ContactName","Account"]).to_csv('member_contributions_grouped-1.csv',index=True)
 
 # Ref: https://pbpython.com/pandas-pivot-table-explained.html
 # Pivot to show all Accounts in cols
 # The values column automatically averages the data so should change to sum. 
 df_pivoted = df_grouped.pivot_table(index="ContactName", columns="Account",values="LineAmount", aggfunc=np.sum, fill_value=0)
-df_pivoted.to_csv('member_contributions_pivoted.csv',index=True)
+if write_to_csv:
+    df_pivoted.to_csv('member_contributions_pivoted.csv',index=True)
+
+upload_to_ddb(df_grouped)
 
 print(background(color(f"Done",(0,0,0)),Colors.green))

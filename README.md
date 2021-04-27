@@ -58,3 +58,10 @@ Upgrade dependencies
 ```bash
 pip install --upgrade -r requirements.txt
 ```
+
+# Schedule Jobs
+To schedule a python job, copy the `.sh` file to the server and setup a crontab as:
+
+```bash
+25 9-10,21 * * 1-6 /home/vibinjk/activesg/member_contribution.sh >/dev/null 2>&1
+```
