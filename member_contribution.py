@@ -15,13 +15,16 @@ import numpy as np
 import boto3
 from decimal import Decimal
 import my_secrets
+from datetime import datetime
 
 # Use this to ensure that ColorIt will be usable by certain command line interfaces
 init_colorit()
 
 # ===============================================================
 # VARIABLES & CONFIGURATION
-since_date = '2021-01-01'
+#since_date = '2021-01-01'
+since_date = datetime.now().strftime("%Y-01-01")
+
 bank_accounts = {"DBS":"1000","NETS":"1001","Cash":"1002"}
 receive_txns = []
 receive_payments = []
@@ -42,7 +45,7 @@ def upload_to_ddb(df_records):
 
     print(color(f"Inserting {len(df_records)} records to DDB",Colors.green))
     for index, row in df_records.iterrows():
-        chunk = {"ContactID":row[0], "ContactName":row[1], 'AccountCode':row[2],'Account':row[3],'LineAmount':Decimal(str(row[4]))}
+        chunk = {"ContactID":row[0], "ContactName":row[1], 'AccountCode':row[2],'Account':row[3],'LineAmount':Decimal(str(row[4])), 'modfied_ts': datetime.now().strftime("%d/%m/%Y %H:%M:%S")}
         table.put_item(Item=chunk)
 
 # Operations on the Transactions DataFrame
@@ -69,7 +72,7 @@ def cleanup_txns_df(_df_tnxs):
 
 # https://api-explorer.xero.com/accounting/banktransactions/getbanktransactions?query-where=BankAccount.Code%3D%3D%221000%22&query-page=1&header-if-modified-since=2021-04-20
 def get_member_txns(since_date):
-    print(color(f"Processing Member Transactions\n================",Colors.blue))
+    print(color(f"\nProcessing Member Transactions\n================",Colors.blue))
     _member_txns = {}
     for bank_account in bank_accounts.items():
         # Reset page counter for each account (DBS, NETS etc.)
