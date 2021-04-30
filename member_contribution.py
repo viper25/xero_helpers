@@ -22,8 +22,9 @@ init_colorit()
 
 # ===============================================================
 # VARIABLES & CONFIGURATION
-#since_date = '2021-01-01'
+
 since_date = datetime.now().strftime("%Y-01-01")
+#since_date = '2020-06-15'
 
 bank_accounts = {"DBS":"1000","NETS":"1001","Cash":"1002"}
 receive_txns = []
@@ -45,7 +46,7 @@ def upload_to_ddb(df_records):
 
     print(color(f"Inserting {len(df_records)} records to DDB",Colors.green))
     for index, row in df_records.iterrows():
-        chunk = {"ContactID":row[0], "ContactName":row[1], 'AccountCode':row[2],'Account':row[3],'LineAmount':Decimal(str(row[4])), 'modfied_ts': datetime.now().strftime("%d/%m/%Y %H:%M:%S")}
+        chunk = {"ContactID":row[0], "ContactName":row[1], 'AccountCode':f"{row[4]}_{row[2]}",'Account':row[3],'LineAmount':Decimal(str(row[5])), 'modfied_ts': datetime.now().strftime("%d/%m/%Y %H:%M:%S")}
         table.put_item(Item=chunk)
 
 # Operations on the Transactions DataFrame
@@ -54,19 +55,11 @@ def cleanup_txns_df(_df_tnxs):
     _df_tnxs = _df_tnxs.explode('Line Items')
 
     # Add the columns from exploded rows
-    # _df_tnxs["LineItem"] = _df_tnxs["Line Items"].apply(lambda x: x.get('Description'))
     _df_tnxs["AccountCode"] = _df_tnxs["Line Items"].apply(lambda x: x.get('AccountCode'))
     _df_tnxs["LineAmount"] = _df_tnxs["Line Items"].apply(lambda x: x.get('LineAmount'))
-
-    # Find a contact
-    # _df_tnxs.loc[_df_tnxs['ContactName'] == "Vibin Joseph Kuriakose"]
-
-    # Lookup and Account code and Add Account Desc
-    s = lookup.set_index('AccountCode')['label']
-    _df_tnxs["Account"] = _df_tnxs["AccountCode"].map(s)
     
     # Remove unwanted exploded dict col
-    _df_tnxs = _df_tnxs.drop(columns=["Line Items","BankAccount","Date","Net Amount"])
+    _df_tnxs = _df_tnxs.drop(columns=["Line Items","BankAccount","Net Amount"])
 
     return _df_tnxs
 
@@ -97,15 +90,18 @@ def get_member_txns(since_date):
                         "ContactID": _txn['Contact']['ContactID'],
                         "ContactName": _txn['Contact']['Name'],                        
                         "BankAccount": _txn['BankAccount']['Name'],
-                        "Date": _txn['DateString'],
+                        # "Year": _txn['DateString'].split('-')[0],
+                        "Year": str(utils.parse_Xero_Date(_txn['Date']).year),
                         # Nested dict
                         "Line Items": _txn['LineItems'],
-                        "Net Amount": _txn['Total']
+                        "Net Amount": _txn['Total'],
+                        "Status": _txn['Status']
                     } 
                     for _txn in txns['BankTransactions'] 
                     if (
                         # Only those tnxs that are payments to STOSC
                         _txn['Type'] == 'RECEIVE' and 
+                        _txn['Status'] == 'AUTHORISED' and
                         _txn['IsReconciled'] == True
                         )]
                 receive_txns.extend(_receive_txns)
@@ -135,9 +131,11 @@ def get_member_invoice_payments(since_date):
                     # Build the output item
                     "ContactID": _payments['Invoice']['Contact']['ContactID'],
                     "ContactName": _payments['Invoice']['Contact']['Name'],
-                    "AccountCode": '3010',
-                    "LineAmount": _payments['Amount'],
-                    "Account": "Subscription"
+                    # We assume any invoices not starting with INV is issued for harvest Festival
+                    "AccountCode": '3010' if _payments['Invoice']['InvoiceNumber'].startswith('INV') else '3200',
+                    #"Year": _txn['DateString'].split('-')[0],
+                    "Year": str(utils.parse_Xero_Date(_payments['Date']).year),
+                    "LineAmount": _payments['Amount']
                 } 
                 for _payments in payments['Payments'] 
                 if (
@@ -158,15 +156,22 @@ df_payments = pd.DataFrame(list_invoice_payments)
 
 df_tnxs = cleanup_txns_df(df_tnxs)
 
+# Find a contact
+# df_tnxs.loc[df_tnxs['ContactName'] == "Vibin Joseph Kuriakose"]
+
 # Merge Subscription Payments and Transaction Data Frames
 df_merged = pd.concat([df_payments, df_tnxs])
+
+# Lookup and Account code and Add Account Desc
+s = lookup.set_index('AccountCode')['label']
+df_merged["Account"] = df_merged["AccountCode"].map(s)
 
 # Save to CSV
 if write_to_csv:
     df_merged.to_csv('member_contributions.csv',index=False)
 
 # Group by Contacts to show all payments from a member
-df_grouped = df_merged.groupby(["ContactID","ContactName","AccountCode","Account"]).sum().reset_index()
+df_grouped = df_merged.groupby(["ContactID","ContactName","AccountCode","Account","Year"]).sum().reset_index()
 print(color(df_grouped.head(5),(200,200,200)))
 if write_to_csv:
     df_grouped.to_csv('member_contributions_grouped.csv',index=True)

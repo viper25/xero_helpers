@@ -74,3 +74,8 @@ def xero_post(*args, **extra_headers):
         return response
     except Exception as e:
         return "Error" + e
+
+#-----------------------------------------------------------------------------------    
+# Parse weird Xero dates of format: /Date(1618963200000+0000)/
+def parse_Xero_Date(_date):
+    return datetime.datetime.fromtimestamp(int(_date[6:-2].split('+')[0])/1000)
