@@ -1,12 +1,14 @@
 from datetime import date
 import datetime
-import os
+import boto3
+from boto3.dynamodb.conditions import Key
+from datetime import datetime
 import requests
 import my_secrets
 
 # TODO Hardcoded Tenant ID
 xero_tenant_id = my_secrets.xero_tenant_ID
-
+token_key = "xero-member-contributions"
 #-----------------------------------------------------------------------------------    
 # Return Jan 1 of current year. For Xero accounting methods
 def year_start():
@@ -15,10 +17,12 @@ def year_start():
 # ------------------------------------------------------
 # Refresh access_token. Use the refresh_token to keep the access_token "fresh" every 30 mins. 
 def xero_get_Access_Token():
-    cwd = os.getcwd()
-    f = open(f"{os.path.join(cwd,'xero_refresh_token.txt')}", 'r')
-    old_refresh_token = f.read()
-    f.close()
+    # Get current refresh token
+    resource = boto3.resource('dynamodb', aws_access_key_id=my_secrets.DDB_ACCESS_KEY_ID, aws_secret_access_key=my_secrets.DDB_SECRET_ACCESS_KEY, region_name='ap-southeast-1')
+    table = resource.Table('stosc_xero_tokens')
+    response = table.query(KeyConditionExpression=Key('token').eq(token_key))
+
+    old_refresh_token = response['Items'][0]['token_key']
     
     url = 'https://identity.xero.com/connect/token'
     response = requests.post(url,headers={
@@ -30,9 +34,10 @@ def xero_get_Access_Token():
     response_dict = response.json()
     current_refresh_token = response_dict['refresh_token']
 
-    xero_output = open(f"{os.path.join(cwd,'xero_refresh_token.txt')}", 'w')
-    xero_output.write(current_refresh_token)
-    xero_output.close()
+    # Set new refresh token
+    chunk = {"token":token_key, 'token_key':current_refresh_token, 'modfied_ts': datetime.now().strftime("%d/%m/%Y %H:%M:%S")}
+    table.put_item(Item=chunk)
+
     return response_dict['access_token']
 
 #-----------------------------------------------------------------------------------    
