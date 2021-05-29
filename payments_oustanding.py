@@ -7,6 +7,10 @@ import csv
 # https://github.com/CodeForeverAndEver/ColorIt
 from colorit import *
 
+# **********************
+# Check for FY21 Invoices
+invoice_prefix = 'INV-21'
+
 # Use this to ensure that ColorIt will be usable by certain command line interfaces
 init_colorit()
 
@@ -53,7 +57,7 @@ with open("contacts.txt", "r") as contacts:
                 print(color(f"{invoice['InvoiceNumber']} ({invoice['Status']}) for {_contact}",Colors.white))
 
                 # Only for FY 21 invoices
-                if invoice['InvoiceNumber'].startswith('INV-21'):
+                if invoice['InvoiceNumber'].startswith(invoice_prefix):
                     if (invoice['Status'] == 'AUTHORISED') or (invoice['Status'] == 'DRAFT'):
                         percentage_Paid = invoice['AmountPaid']/invoice['Total']
                         percentage_days_of_year = (today - date(date.today().year, 1, 1)).days/365
