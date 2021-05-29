@@ -8,7 +8,7 @@ import my_secrets
 
 # TODO Hardcoded Tenant ID
 xero_tenant_id = my_secrets.xero_tenant_ID
-token_key = "xero-member-contributions"
+token_key = "xero-helpers"
 #-----------------------------------------------------------------------------------    
 # Return Jan 1 of current year. For Xero accounting methods
 def year_start():
