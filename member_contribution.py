@@ -5,11 +5,9 @@ https://developer.xero.com/documentation/api/banktransactions#GET
 Up to 100 bank transactions will be returned per call, with line items shown for each transaction, when the page parameter is used e.g. page=1
 """
 
-import requests
 import utils
 # https://github.com/CodeForeverAndEver/ColorIt
 from colorit import *
-import csv
 import pandas as pd
 import numpy as np
 import boto3
