@@ -109,7 +109,6 @@ def get_member_txns(since_date):
 # https://api-explorer.xero.com/accounting/payments/getpayments?query-page=1&query-where=PaymentType%3D%22ACCRECPAYMENT%22&header-if-modified-since=2021-04-25
 def get_member_invoice_payments(since_date):
     print(color(f"Processing Member Subscriptions\n================",Colors.blue))
-    _member_payments = {}
     has_more_pages = True
     page = 0
     
