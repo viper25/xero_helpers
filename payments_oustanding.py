@@ -6,10 +6,12 @@ import utils
 import csv
 # https://github.com/CodeForeverAndEver/ColorIt
 from colorit import *
+from datetime import datetime
+import pandas as pd
 
-# **********************
-# Check for FY21 Invoices
-invoice_prefix = 'INV-21'
+receive_payments = []
+# For all invoices Updated after since_date i.e. created this year
+since_date = datetime.now().strftime("%Y-01-01")
 
 # Use this to ensure that ColorIt will be usable by certain command line interfaces
 init_colorit()
@@ -30,60 +32,51 @@ def get_ContactID(code = None):
         else:
             return None
 
-def export_list(_members_outstanding):
-    with open('payments_oustanding.csv', 'w') as f:
-        for key in _members_outstanding.keys():
-            f.write("%s,%s\n"%(key,_members_outstanding[key]))
+def getInvoiceAmount(invoiceID):
+    url = f"https://api.xero.com/api.xro/2.0/Invoices/{invoiceID}"
+    invoice = utils.xero_get(url)
+    return "Not Implemented"
 
-today = date.today()
-members_outstanding = {}
-with open("contacts.txt", "r") as contacts:
-    # For each member ID
-    #contacts = ['B008']
-    for _contact in contacts:
-        # Remove newline char
-        _contact = _contact.strip()
-        #print(color(f"Processing {_contact[:4]}",Colors.yellow))
-        _contactID = get_ContactID(_contact[:4])
-        if _contactID:
+def get_member_invoice_payments(since_date):
+    has_more_pages = True
+    page = 0
+    
+    # Go through pages (100 txns per page)
+    while has_more_pages:
+        page += 1
+        # This endpoint does not return payments applied to invoices, expense claims or transfers between bank accounts.
+        url = f'https://api.xero.com/api.xro/2.0/Invoices?page={page}&where=Type=="ACCREC"&Statuses=AUTHORISED,PAID&summaryonly=True'
+        _header = {'If-Modified-Since': since_date}
+        invoices = utils.xero_get(url,**_header)
+        if len(invoices['Invoices']) == 0:
+            has_more_pages = False
+        else:
+            # Keep only "Type":"RECEIVE" & construct a dict via Python List Comprehension
+            _invoices = [
+                {
+                    # Build the output item
+                    "ContactName": _invoice['Contact']['Name'],
+                    "InvoiceNumber": _invoice['InvoiceNumber'],
+                    "InvoiceDate": utils.parse_Xero_Date(_invoice['Date']).date(),
+                    "InvoiceYear": '20' + _invoice['InvoiceNumber'][4:][:2],
+                    "Total": _invoice['Total'],
+                    "AmountDue": _invoice['AmountDue'],
+                    "AmountPaid": _invoice['AmountPaid'],
+                } 
+                for _invoice in invoices['Invoices']
+                 
+                if (
+                    # Only Subscription invoices and No Harvest Festival ones
+                    _invoice['InvoiceNumber'].startswith('INV')
+                    )
+                ]
+            receive_payments.extend(_invoices)
+    print(color(f"Processed {len(receive_payments)} Subscriptions",Colors.orange))
+    return receive_payments
 
-            # Get all Invoices for this contact 
-            url = f"https://api.xero.com/api.xro/2.0/Invoices?ContactIDs={_contactID}&Statuses=AUTHORISED,PAID,DRAFT"
-            # Get Invoices Created only this year 
-            _header = {'If-Modified-Since': utils.year_start()}
-            invoices = utils.xero_get(url,**_header)
 
-            for invoice in invoices['Invoices']:
-                print(color(f"{invoice['InvoiceNumber']} ({invoice['Status']}) for {_contact}",Colors.white))
+list_invoice_payments = get_member_invoice_payments(since_date)
+df_payments = pd.DataFrame(list_invoice_payments)
+df_payments.to_csv('payments_oustanding.csv',index=False)
 
-                # Only for FY 21 invoices
-                if invoice['InvoiceNumber'].startswith(invoice_prefix):
-                    if (invoice['Status'] == 'AUTHORISED') or (invoice['Status'] == 'DRAFT'):
-                        percentage_Paid = invoice['AmountPaid']/invoice['Total']
-                        percentage_days_of_year = (today - date(date.today().year, 1, 1)).days/365
-                        ''' 
-                        The lower the delta the better:
-                        If a member has paid half his dues (50%) by June (50% of the year) then delta = 0
-                        In this case he is 100% upto date in payments. If he's paid only 10% of his annual 
-                        dues by say Dec (~90%) then his delta is 0.9 - 0.1 = 0.8 (80%) which is > 50% 
-                        payment. Therefore he isn't eligible for GB in Dec.
-                        If he has paid 90% by say Jun (~50%) then delta = 0.5 - 0.9 = -40% which is < 50% 
-                        so he's eligible for GB in Jan
-                        '''
-                        delta = percentage_days_of_year - percentage_Paid
-                        # A user hasn't paid > 50% of his dues taking into account time passed in the year
-                        if my_secrets.payment_delta < delta :
-                            members_outstanding[_contact] = abs(percentage_Paid - percentage_days_of_year)
-                            print(color(f"{_contact[:4]} is outstanding by {round(delta*100,1)} % ",Colors.red))
-                            #print(f"{percentage_Paid} - {percentage_days_of_year} = {abs(percentage_Paid - percentage_days_of_year)}")
-                        else:
-                            print(color(f"{_contact[:4]} payment delta = {round(delta*100,1)} % ",Colors.blue))
-                            members_outstanding[_contact] = round(delta,2)
-                    elif invoice['Status'] == 'PAID':
-                        members_outstanding[_contact] = 0.00
-                        print(color(f"{_contact[:4]} has cleared all dues ",Colors.green))
-
-        print("---------------------------")
-
-export_list(members_outstanding)
 print("DONE")

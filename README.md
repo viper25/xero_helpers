@@ -1,5 +1,5 @@
 # Overview
-Helper Scripts for Xero. Since one can to bulk-update Xero invoices, use these helper script to do that. This script is not generic and is created for my specific needs:
+Helper Scripts for Xero. Since one can not bulk-update Xero invoices, use these helper script to do that. This script is not generic and is created for my specific needs:
 
 ## Update Xero Invoice status 
 Move a lot of AUTHORIZED invoices to DRAFT mode keeping the same Invoice numbers. File is `xero_invoice.py`
@@ -22,8 +22,19 @@ In Xero it is not possible to get all payments by a member in one go. This [scri
 
 ![image](https://user-images.githubusercontent.com/327990/116328243-2f78ae00-a7fb-11eb-9e78-c5ba667b500b.png)
 
-
 This is also set to run as a cronjob that populates a DynamoDB. Update the configuration at the top of the file to turn off excel generation etc. 
+## Member Subscription Payments
+
+Get eligible General Body attendees based on subscription payments made. [script](payments_oustanding.py). This shows only Invoice details and not other payments
+
+```
+                 ContactName InvoiceNumber InvoiceDate InvoiceYear   Total  AmountDue  AmountPaid
+0               John1 Name12   INV-20-0036  2020-10-01        2020   100.0        0.0       100.0
+1               Sunil Samuel   INV-20-0209  2020-10-01        2020  1200.0        0.0      1200.0
+2               Example Pers   INV-20-0216  2020-10-01        2020   120.0        0.0       120.0
+3       Samea Mathews Name12   INV-19-0003  2020-10-01        2019   120.0        0.0       120.0
+4       Samea Mathews Name12   INV-18-0001  2020-10-01        2018   120.0        0.0       120.0
+```
 
 ### Setup Python Environment
 
