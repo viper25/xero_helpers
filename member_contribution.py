@@ -169,7 +169,7 @@ if write_to_csv:
 
 # Group by Contacts to show all payments from a member
 df_grouped = df_merged.groupby(["ContactID","ContactName","AccountCode","Account","Year"]).sum().reset_index()
-print(color(df_grouped.head(5),(200,200,200)))
+print(color(df_grouped.sort_values(by=['ContactName']).head(5),(200,200,200)))
 if write_to_csv:
     df_grouped.to_csv('member_contributions_grouped.csv',index=True)
 # df_grouped.pivot_table(index=["ContactName","Account"]).to_csv('member_contributions_grouped-1.csv',index=True)
