@@ -12,7 +12,7 @@ import pandas as pd
 receive_payments = []
 # For all invoices Updated after since_date i.e. created this year
 since_date = datetime.now().strftime("%Y-01-01")
-
+file_name = 'payments_oustanding.csv'
 # Use this to ensure that ColorIt will be usable by certain command line interfaces
 init_colorit()
 
@@ -77,6 +77,7 @@ def get_member_invoice_payments(since_date):
 
 list_invoice_payments = get_member_invoice_payments(since_date)
 df_payments = pd.DataFrame(list_invoice_payments)
-df_payments.to_csv('payments_oustanding.csv',index=False)
+df_payments.to_csv(file_name,index=False)
+print(color(f"Written to {file_name}",Colors.white))
 
 print("DONE")

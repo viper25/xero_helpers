@@ -2,3 +2,5 @@ requests
 color-it
 boto3
 pandas
+python-dotenv
+SQLAlchemy

@@ -40,17 +40,17 @@ Get eligible General Body attendees based on subscription payments made. [script
 
 Setup your virtual environment. 
 ```bash
-python -m venv .env
+python -m venv .venv
 ```
 
 Activate (on Windows):
 ```dos
-.env\Scripts\activate.bat
+.venv\Scripts\activate.bat
 ```
 
 On linux: 
 ```bash
-source .env/bin/activate
+source .venv/bin/activate
 ```
 
 Install dependencies
