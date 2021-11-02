@@ -4,3 +4,7 @@ boto3
 pandas
 python-dotenv
 SQLAlchemy
+pyfiglet
+# Menu 
+console-menu
+pyinstaller #Build Windows exe

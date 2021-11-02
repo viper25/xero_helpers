@@ -84,3 +84,23 @@ def xero_post(*args, **extra_headers):
 # Parse weird Xero dates of format: /Date(1618963200000+0000)/
 def parse_Xero_Date(_date):
     return datetime.fromtimestamp(int(_date[6:-2].split('+')[0])/1000)
+
+
+#-----------------------------------------------------------------------------------
+# Get the Xero Contact ID from the Account Code
+def get_ContactID(code = None):
+    if code is None:
+        url = 'https://api.xero.com/api.xro/2.0/Contacts'        
+        contacts = xero_get(url)
+    else:
+        # https://developer.xero.com/documentation/api/contacts#optimised-queryparameters
+        # https://api-explorer.xero.com/accounting/contacts/getcontacts?query-where=AccountNumber%3D%3D%22B030%22
+        url = f'https://api.xero.com/api.xro/2.0/Contacts?where=AccountNumber=="{code}"'
+        contacts = xero_get(url)
+        if ('Contacts' in contacts) and len(contacts['Contacts'])>0:
+            return contacts['Contacts'][0]['ContactID']
+        else:
+            return None
+
+def string_to_bytes(string):
+    return bytes(string, 'utf-8')

@@ -1,31 +1,11 @@
 # Overview
 Helper Scripts for Xero. Since one can not bulk-update Xero invoices, use these helper script to do that. This script is not generic and is created for my specific needs:
 
-## Update Xero Invoice status 
-Move a lot of AUTHORIZED invoices to DRAFT mode keeping the same Invoice numbers. File is `xero_invoice.py`
+## 1. Generate Xero Contact Lookup
+To generate GB Eligible member listing we need a lokup of Xero ContactID to memberCode. 
 
-This is done by first renaming the original invoice (as we want to re-use the same invoice numbers), VOIDing them and then recreating them.
-
-![image](https://user-images.githubusercontent.com/327990/103514620-f7460c00-4ea7-11eb-9a6b-f797fd85bdf5.png)
-
-
-
-## Invoices outstanding
-We keep all Xero invoices in "Draft" mode so as not to show them as Receiables in P&L and inflate revenue. But we need to know among these drafts, for all members, how many are oustanding on payments (as if the Invoices were in "Approved Mode"). This is needed to find eleigible members for GB. File is `payments_oustanding.py`
-
-A CSV is generated. Users who have a payment delta of > 50% (or 0.5) are not eligible.
-
-![image](https://user-images.githubusercontent.com/327990/107588103-fee29880-6c3d-11eb-994e-5edce62d68ed.png)
-
-## Member Contributions
-In Xero it is not possible to get all payments by a member in one go. This [script](member_contribution.py) helps do that. 
-
-![image](https://user-images.githubusercontent.com/327990/116328243-2f78ae00-a7fb-11eb-9e78-c5ba667b500b.png)
-
-This is also set to run as a cronjob that populates a DynamoDB. Update the configuration at the top of the file to turn off excel generation etc. 
-## Member Subscription Payments
-
-Get eligible General Body attendees based on subscription payments made. [script](payments_oustanding.py). This shows only Invoice details and not other payments
+## 2. Outstanding Payments (GB Member List)
+Generate GB-eligible member list based on Subscription payment. If they have paid atleast 1 month subscription in the last 6 month window, they are eligible. [Script Here](payments_oustanding.py). This shows only Invoice details and not other payments
 
 ```
                  ContactName InvoiceNumber InvoiceDate InvoiceYear   Total  AmountDue  AmountPaid
@@ -35,6 +15,32 @@ Get eligible General Body attendees based on subscription payments made. [script
 3       Samea Mathews Name12   INV-19-0003  2020-10-01        2019   120.0        0.0       120.0
 4       Samea Mathews Name12   INV-18-0001  2020-10-01        2018   120.0        0.0       120.0
 ```
+Asumption: The Invoices are named `INV-20` where 20 represents the year.
+
+
+## 3. Update Xero Invoice status 
+Move a lot of AUTHORIZED invoices to DRAFT mode keeping the same Invoice numbers. File is `xero_invoice.py`
+
+This is done by first renaming the original invoice (as we want to re-use the same invoice numbers), VOIDing them and then recreating them.
+
+![image](https://user-images.githubusercontent.com/327990/103514620-f7460c00-4ea7-11eb-9a6b-f797fd85bdf5.png)
+
+
+
+## 4. Invoices outstanding
+We keep all Xero invoices in "Draft" mode so as not to show them as Receiables in P&L and inflate revenue. But we need to know among these drafts, for all members, how many are oustanding on payments (as if the Invoices were in "Approved Mode"). This is needed to find eleigible members for GB. File is `payments_oustanding.py`
+
+A CSV is generated. Users who have a payment delta of > 50% (or 0.5) are not eligible.
+
+![image](https://user-images.githubusercontent.com/327990/107588103-fee29880-6c3d-11eb-994e-5edce62d68ed.png)
+
+## 5. Member Contributions
+In Xero it is not possible to get all payments by a member in one go. This [script](member_contribution.py) helps do that. 
+
+![image](https://user-images.githubusercontent.com/327990/116328243-2f78ae00-a7fb-11eb-9e78-c5ba667b500b.png)
+
+This is also set to run as a cronjob that populates a DynamoDB. Update the configuration at the top of the file to turn off excel generation etc. 
+
 
 ### Setup Python Environment
 
@@ -84,3 +90,7 @@ To schedule a python job, copy the `.sh` file to the server and setup a crontab 
 ```bash
 25 9-10,21 * * 1-6 /home/vibinjk/activesg/member_contribution.sh >/dev/null 2>&1
 ```
+
+## TO DO
+
+* Optimize use of `utils.py:19(xero_get_Access_Token)` to reuse the token and not call each time

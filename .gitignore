@@ -121,7 +121,7 @@ venv.bak/
 /site
 
 # mypy
-.mypy_cache/
+.py_cache/
 .dmypy.json
 dmypy.json
 
@@ -138,5 +138,4 @@ my_secrets.py
 # VS Code setings
 .vscode/
 
-# Xero Refresh Token
-xero_refresh_token.txt
+*.rc

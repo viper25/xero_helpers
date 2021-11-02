@@ -2,7 +2,8 @@
 To get a matrix of all the members contributions for the year. This does NOT include 
 Invoice payments (i.e. member subscription payments)
 https://developer.xero.com/documentation/api/banktransactions#GET
-Up to 100 bank transactions will be returned per call, with line items shown for each transaction, when the page parameter is used e.g. page=1
+Up to 100 bank transactions will be returned per call, with line items shown for each transaction, 
+when the page parameter is used e.g. page=1. The data is refreshed in DDB which is used by the Telegram bot 
 """
 
 import utils
@@ -171,7 +172,7 @@ if write_to_csv:
 df_grouped = df_merged.groupby(["ContactID","ContactName","AccountCode","Account","Year"]).sum().reset_index()
 print(color(df_grouped.sort_values(by=['ContactName']).head(5),(200,200,200)))
 if write_to_csv:
-    df_grouped.to_csv('member_contributions_grouped.csv',index=True)
+    df_grouped.to_csv('csv\member_contributions_grouped.csv',index=True)
 # df_grouped.pivot_table(index=["ContactName","Account"]).to_csv('member_contributions_grouped-1.csv',index=True)
 
 # Ref: https://pbpython.com/pandas-pivot-table-explained.html

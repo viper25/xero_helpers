@@ -51,10 +51,14 @@ def get_Xero_Contacts():
             contacts.extend(_contacts)
     return contacts
 
-print(color(f"Getting Member List...", Colors.white))
-list_Contacts = get_Xero_Contacts()
-df_contacts = pd.DataFrame(list_Contacts)
-print(color(f"{df_contacts.head(2)}\n", Colors.blue))
-df_contacts.to_csv(file_name, index=False)
-print(color(f"Written to {file_name}", Colors.white))
-print("DONE")
+def Xero_Contact_List():
+    print(color(f"Getting Member List...", Colors.white))
+    list_Contacts = get_Xero_Contacts()
+    df_contacts = pd.DataFrame(list_Contacts)
+    print(color(f"{df_contacts.head(2)}\n", Colors.blue))
+    df_contacts.to_csv(file_name, index=False)
+    print(color(f"Written to {file_name}", Colors.white))
+    print("DONE")
+
+if __name__ == '__main__':
+    Xero_Contact_List()
