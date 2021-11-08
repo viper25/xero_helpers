@@ -1,7 +1,12 @@
 """
-Crete New invoices - for Harvest festival or Annual Subscription
-Input file for harvest Festival is a CSV *HAS* to have list ordered by Member Code
-Set the NEXT invoice in Xero (https://go.xero.com/InvoiceSettings/InvoiceSettings.aspx) to HF-21-0001
+▶ Create New invoices - for Harvest festival or Annual Subscription
+▶ Input file for harvest Festival is a CSV *HAS* to have list ordered by Member Code. Format:
+    61-Mango & Pineapple,W002-Josey,200
+    62-Pineapple,W002-Josey,120
+▶ Set the NEXT invoice in Xero (https://go.xero.com/InvoiceSettings/InvoiceSettings.aspx) to HF-21-0001
+▶ Account Code 3200 to exist 
+▶ Check Tenant IDs in mysecrets.py. If using Demo Tenant, get it's TenantID using xero_first_time.py
+▶ ❗ Set Variables Below 
 """
 
 import utils
@@ -14,8 +19,8 @@ init_colorit()
 
 # Ensure the CSV is sorted by member name
 csv_file = "csv\harvest_invoices.csv"
-list_of_well_wishers = ['W001','W002','W003','W004','W005']
-STOSC_WELL_WISHER_CONTACT_ID = 'xxx'
+list_of_well_wishers = ['W001','W002','W003','W004','W005','W006','W007']
+STOSC_WELL_WISHER_CONTACT_ID = '5d692b60-877b-41a8-9b7e-9e8caff325d3'
 
 def create_xero_invoice(inv):
     response =  utils.xero_post("https://api.xero.com/api.xro/2.0/Invoices/",inv)
@@ -29,11 +34,11 @@ def create_xero_invoice(inv):
 new_invoice_data = {}
 _current_member_code = ''
 
-# Just a failsafe check
-if my_secrets.xero_tenant_ID == 'xxx':
-    print(color(f"CAREFUL!: This is STOSC PRODUCTION ACCOUNT. Are you sure?",Colors.red))
-    print(color(f"Did you set NEXT Invoice Numbers? to HF-21-001? ",Colors.red))
-    sys.exit(0)
+# # Just a failsafe check
+# if my_secrets.xero_tenant_ID == 'f7dc56b9-fe29-43cf-be0a-a5488da4e30f':
+#     print(color(f"CAREFUL!: This is STOSC PRODUCTION ACCOUNT. Are you sure?",Colors.red))
+#     print(color(f"Did you set NEXT Invoice Numbers? to HF-21-001? ",Colors.red))
+#     sys.exit(0)
 
 with open(csv_file, 'r') as f:
     for line in f:        
@@ -78,7 +83,7 @@ with open(csv_file, 'r') as f:
                 contact['ContactID'] = _contactID
                 new_invoice_data['Contact'] = contact
                 new_invoice_data['Date'] = '2021-11-07'
-                new_invoice_data['DueDate'] = '2021-12-31'
+                new_invoice_data['DueDate'] = '2021-12-01'
                 new_invoice_data['LineAmountTypes'] = 'NoTax'
                 new_invoice_data['Reference'] = 'Harvest Festival 2021'
                 new_invoice_data['Status'] = 'AUTHORISED'

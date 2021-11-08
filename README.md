@@ -41,6 +41,9 @@ In Xero it is not possible to get all payments by a member in one go. This [scri
 
 This is also set to run as a cronjob that populates a DynamoDB. Update the configuration at the top of the file to turn off excel generation etc. 
 
+## 6. Generate Harvest Festival invoices
+
+![image](https://user-images.githubusercontent.com/327990/140695995-47ba9ab0-3a4a-49d8-b126-180643179b16.png)
 
 ### Setup Python Environment
 
