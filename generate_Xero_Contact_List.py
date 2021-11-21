@@ -15,7 +15,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-file_name = "xero_contacts.csv"
+file_name = "csv\\xero_contacts.csv"
 # Use this to ensure that ColorIt will be usable by certain command line interfaces
 init_colorit()
 
@@ -37,7 +37,7 @@ def get_Xero_Contacts():
             _contacts = [
                 {
                     "memberCode": _contact['AccountNumber'],
-                    "Name": _contact['FirstName'] + ' ' + _contact['LastName'],
+                    "Name": _contact['FirstName'] + ' ' + _contact['LastName'] if 'LastName' in _contact else '',
                     "ContactID": _contact['ContactID']
                 }
                 for _contact in xero_contacts['Contacts']

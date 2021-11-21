@@ -34,11 +34,11 @@ def create_xero_invoice(inv):
 new_invoice_data = {}
 _current_member_code = ''
 
-# # Just a failsafe check
-# if my_secrets.xero_tenant_ID == 'f7dc56b9-fe29-43cf-be0a-a5488da4e30f':
-#     print(color(f"CAREFUL!: This is STOSC PRODUCTION ACCOUNT. Are you sure?",Colors.red))
-#     print(color(f"Did you set NEXT Invoice Numbers? to HF-21-001? ",Colors.red))
-#     sys.exit(0)
+# Just a failsafe check
+if my_secrets.xero_tenant_ID == 'xxx':
+    print(color(f"CAREFUL!: This is STOSC PRODUCTION ACCOUNT. Are you sure?",Colors.red))
+    print(color(f"Did you set NEXT Invoice Numbers? to HF-21-001? ",Colors.red))
+    sys.exit(0)
 
 with open(csv_file, 'r') as f:
     for line in f:        
@@ -101,7 +101,4 @@ with open(csv_file, 'r') as f:
         print(color(f"Invoice not created",Colors.red))                  
 
 
-
-    
-
-                    
+print(color(f"Remember to reset the Invoice Numbering",Colors.blue))                  

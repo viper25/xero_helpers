@@ -1,9 +1,11 @@
 """
-▶ Create New invoices - for Annual Subscription
-################# DRAFT #################
-▶ Input file is a text file of ordered Member Codes. Format:
+▶ Create New invoices - for Annual Subscription based on prevoius years invoice amount
+▶ Input file is a text file of Member Codes. It's good (not mandatory that the list be sorted) Format:
     R023
     Z001
+  You can also use `generate_Xero_Contact_List.py` to generate the csv file of the format:
+    R023,Reji K Varghese,208dd022-9620-4aef-b515-f00b726bd1a8
+  The code will handle both types of files.
 ▶ Set the NEXT invoice in Xero (https://go.xero.com/InvoiceSettings/InvoiceSettings.aspx) to HF-22-0001
 ▶ Account Code 3010 to exist (Member Subscription)
 ▶ Check Tenant IDs in mysecrets.py. If using Demo Tenant, get it's TenantID using xero_first_time.py
@@ -20,6 +22,7 @@ import my_secrets
 init_colorit()
 
 # Ensure the CSV is sorted by member name
+# csv_file = "csv\xero_contacts.csv"
 csv_file = "csv\contacts.txt"
 
 INVOICE_DESC = 'Subscription 2022'
@@ -27,7 +30,7 @@ SUBSCRIPTION_ACCOUNT_CODE = '3010'
 INVOICE_DATE  = '2022-01-01'
 INVOICE_DUE_DATE = '2022-12-31'
 # Look for Invoices starting with this prefix to determine a members previous subscription
-SEARCH_STRING_FOR_PREVIOUS_SUBSCRIPTION = 'INV-20'
+SEARCH_STRING_FOR_PREVIOUS_SUBSCRIPTION = 'INV-21'
 
 def create_xero_invoice(inv):
     response =  utils.xero_post("https://api.xero.com/api.xro/2.0/Invoices/",inv)
@@ -59,7 +62,6 @@ def get_last_subscription_amount_by_contact_id(contact_id):
 
 # Initialize variables
 new_invoice_data = {}
-_current_member_code = ''
 
 # Just a failsafe check
 if my_secrets.xero_tenant_ID == 'f7dc56b9-fe29-43cf-be0a-a5488da4e30f':
