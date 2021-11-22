@@ -21,9 +21,10 @@ all_members = []
 since_date = datetime.now().strftime("%Y-01-01T00:00:00")
 file_eligible_gb_members = "csv\\eligible_gb_members.csv"
 file_eligible_gb_members_grouped = "csv\\eligible_gb_members_grouped.csv"
-file_members = "csv\\contacts1.txt"
+file_members = "csv\\xero_contacts.csv"
 todays_date = date.today()
-current_month = date.today().month
+# month_of_gb = date.today().month
+month_of_gb = 12
 OVERDUE_LIMIT_DAYS = 182
 # INV-21
 INVOICE_YEAR = f"INV-{str(date.today().year)[2:]}"
@@ -33,13 +34,17 @@ init_colorit()
 '''
 Ensure this file is already generated
 '''
-def get_member_code(name):
+def get_member_code(xero_contact_ID):
     df = pd.read_csv(file_members)
     try:
-        code = df[df["Name"] == name]['memberCode'].iloc[0]
+        code = df[df["ContactID"] == xero_contact_ID]['memberCode'].iloc[0]
     except:
         code = "" 
     return code
+
+def update_CRM(members):
+    # TODO: Update CRM with GB_Eligible
+    pass
 
 
 def get_eligible_GB_members():
@@ -61,7 +66,7 @@ def get_eligible_GB_members():
                     # Reset member dict
                     _member = {}
                     _member["Member_Name"] = _invoice["Contact"]["Name"]
-                    _member["Member_Code"] = get_member_code(_invoice["Contact"]["Name"])
+                    _member["Member_Code"] = get_member_code(_invoice['Contact']['ContactID'])
                     print(color(f"Processing {_invoice['Contact']['Name']}", Colors.orange))
                     # _member["ContactID"] = _invoice["Contact"]["ContactID"]1
                     _member["Invoice_Number"] = _invoice["InvoiceNumber"]
@@ -80,11 +85,10 @@ def get_eligible_GB_members():
                             continue
 
                         months_paid_for = (_invoice["Total"] - _invoice["AmountDue"])/(_invoice["Total"]/12)
-                        months_unpaid = current_month - months_paid_for
+                        months_unpaid = month_of_gb - months_paid_for
                         _member["Months_Paid_For"] = months_paid_for
                         _member["Months_Unpaid"] = months_unpaid
-                        months_outstanding = 12 - months_paid_for
-                        _member["GB Eligible"] = "No" if months_outstanding > 6 else "Yes"                        
+                        _member["GB_Eligible"] = "No" if months_unpaid > 6 else "Yes"                        
 
                         # Loop through all payments save latest payment details
                         for payment in _invoice["Payments"]:
@@ -110,8 +114,9 @@ def get_eligible_GB_members():
 def generate_payments_oustanding():
     print(color(f"Generating GB Members ...", Colors.blue))
     # member_invoices_current_year = get_invoices()
-    member_payments_current_year = get_eligible_GB_members()
-    df_payments = pd.DataFrame(member_payments_current_year).sort_values(by=["Member_Name"])
+    members_payments = get_eligible_GB_members()
+    update_CRM(members_payments)
+    df_payments = pd.DataFrame(members_payments).sort_values(by=["Member_Name"])
     # df_payments.to_csv(file_name1, index=False)
     # df_grouped_payments = df_payments.groupby(["ContactName", "InvoiceNumber", "Days_Since_Last_Payment"]).sum().reset_index()
     df_payments.to_csv(file_eligible_gb_members, index=False)
