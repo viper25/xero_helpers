@@ -23,7 +23,7 @@ def __xero_get_Access_Token():
     # Get current refresh token
     
     response=table.query(KeyConditionExpression=Key('token').eq(REFRESH_TOKEN_KEY))
-    old_refresh_token = response['Items'][0]['token_key']
+    old_refresh_token = response['Items'][0]['refresh_token']
     
     url = 'https://identity.xero.com/connect/token'
     response = requests.post(url,headers={
@@ -36,7 +36,7 @@ def __xero_get_Access_Token():
     current_refresh_token = response_dict['refresh_token']
 
     # Set new refresh token
-    chunk = {"token":REFRESH_TOKEN_KEY, 'token_key':current_refresh_token, 'modfied_ts': datetime.now().strftime("%d/%m/%Y %H:%M:%S")}
+    chunk = {"token":REFRESH_TOKEN_KEY, 'refresh_token':current_refresh_token, 'modfied_ts': datetime.now().strftime("%d/%m/%Y %H:%M:%S")}
     table.put_item(Item=chunk)
 
     return response_dict['access_token']
