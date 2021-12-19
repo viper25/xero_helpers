@@ -56,7 +56,7 @@ def Xero_Contact_List():
     list_Contacts = get_Xero_Contacts()
     df_contacts = pd.DataFrame(list_Contacts)
     print(color(f"{df_contacts.head(2)}\n", Colors.blue))
-    df_contacts.to_csv(file_name, index=False)
+    df_contacts.sort_values(by=['memberCode']).to_csv(file_name, index=False)
     print(color(f"Written to {file_name}", Colors.white))
     print("DONE")
 
