@@ -6,6 +6,12 @@ from datetime import datetime
 import requests
 import my_secrets
 import os
+import logging
+from colorit import *
+import time
+
+# Use this to ensure that ColorIt will be usable by certain command line interfaces
+init_colorit()
 
 # TODO Hardcoded Tenant ID
 xero_tenant_id = my_secrets.xero_tenant_ID
@@ -77,7 +83,14 @@ def xero_post(*args, **extra_headers):
         _headers.update(extra_headers)
     try:
         response = requests.post(args[0],headers=_headers,json=args[1])
-        return response
+        if response.status_code == 429:
+            print(color(f"Too many requests. Trying after {int(response.headers._store['retry-after'][1]) + 5} seconds", Colors.red))  
+            time.sleep(int(response.headers._store['retry-after'][1]) + 5)
+            # Try ONCE more (assuming this time it DOESN'T error)
+            requests.post(args[0],headers=_headers,json=args[1])
+            return response.json()
+        else:
+            return response.json()
     except Exception as e:
         return "Error" + e
 
@@ -105,3 +118,26 @@ def get_ContactID(code = None):
 
 def string_to_bytes(string):
     return bytes(string, 'utf-8')
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(
+    filename="xero.log",
+    filemode="a",
+    format="%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s",
+    datefmt="%H:%M:%S",
+    level=logging.INFO,
+)
+
+# Override the logging functionality to use colorit
+class my_logger():
+    def warn(msg):
+        print(color(f"{msg}",Colors.red))
+        logging.warning(msg)
+
+    def error(msg):
+        print(color(f"{msg}",Colors.red))
+        logging.error(msg)
+
+    def info(msg, Color=Colors.white):
+        print(color(f"{msg}",Color))
+        logging.info(msg)
