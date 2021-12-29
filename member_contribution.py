@@ -30,7 +30,7 @@ receive_txns = []
 receive_payments = []
 lookup = pd.DataFrame({
     'label':[
-        "Member Subscription","Offertory","Holy Qurbana","Auction Sales","Birthday Offering","Baptism and wedding Offering","Catholicate Fund Donation","Good Friday Donation","Christmas Offering","Diocesan Development Fund","Metropolitan Fund ","Resisa Donation","Self Denial Fund","Marriage Assistance Fund","Seminary Fund","Mission Fund","Sunday School","Youth Fellowship Donations","Tithe","Annual Thanksgiving Auction","Annual Thanksgiving Donation","Other Revenue","Interest Income","St. Mary's League Income","Donations & Gifts"
+        "Member Subscription","Offertory","Holy Qurbana","Auction Sales","Birthday Offering","Baptism and wedding Offering","Catholicate Fund Donation","Holy Week Donation","Christmas Offering","Diocesan Development Fund","Metropolitan Fund ","Resisa Donation","Self Denial Fund","Marriage Assistance Fund","Seminary Fund","Mission Fund","Sunday School","Youth Fellowship Donations","Tithe","Annual Thanksgiving Auction","Annual Thanksgiving Donation","Other Revenue","Interest Income","St. Mary's League Income","Donations & Gifts"
         ],
     'AccountCode':[
         "3010","3020","3030","3040","3050","3060","3070","3080","3090","3100","3110","3120","3130","3140","3150","3160","3170","3180","3190","3200","3210","3220","3230","3240","3250"
