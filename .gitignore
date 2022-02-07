@@ -131,6 +131,7 @@ dmypy.json
 #Exclude all test files
 *test*.py
 *.csv
+*.env
 
 # Tokens & Secrets
 my_secrets.py

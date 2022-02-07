@@ -15,6 +15,9 @@ Use xoauth.exe to get an access token, plug that into xero_first_time.py and get
 
 Notes For FY22:
 ▶ Removed Tittoo
+
+Manually check for pro-rated invoices and set to the proper Value.
+For FY22: M053 was pro-rated. Check CRM https://crm.stosc.com/churchcrm/v2/family/710
 """
 
 import utils
@@ -79,7 +82,7 @@ def get_last_subscription_amount_by_contact_id(contact_id):
 new_invoice_data = {}
 
 # Just a failsafe check
-if my_secrets.xero_tenant_ID == "xxx":
+if my_secrets.xero_tenant_ID == "XXX":
     print(color(f"CAREFUL!: This is STOSC PRODUCTION ACCOUNT. Are you sure?", Colors.red))
     print(color(f"Did you set NEXT Invoice Numbers? to INV-22-001? ", Colors.red))
     sys.exit(0)

@@ -115,7 +115,17 @@ def get_ContactID(code = None):
             return contacts['Contacts'][0]['ContactID']
         else:
             return None
-
+#-----------------------------------------------------------------------------------
+def get_Invoices(_contactID):
+    if _contactID:
+        url = f'https://api.xero.com/api.xro/2.0/Invoices?ContactIDs={_contactID}&Statuses=AUTHORISED,PAID&where=Type="ACCREC"'
+        # Add If-Modified-Since HTTP header to get this year's invoices only
+        # _header={'If-Modified-Since': utils.year_start()}
+        # return __xero_get(url,**_header)
+        return xero_get(url)
+#-----------------------------------------------------------------------------------
+# 
+#         
 def string_to_bytes(string):
     return bytes(string, 'utf-8')
 
