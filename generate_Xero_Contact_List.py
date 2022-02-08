@@ -5,11 +5,11 @@ future easy lookup
 import utils
 
 # https://github.com/CodeForeverAndEver/ColorIt
-from colorit import *
+from colorama import init, Fore, Back, Style, deinit
 import pandas as pd
 import logging
 
-
+init(autoreset=True)
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
 )
@@ -17,7 +17,6 @@ logger = logging.getLogger(__name__)
 
 file_name = "csv\\xero_contacts.csv"
 # Use this to ensure that ColorIt will be usable by certain command line interfaces
-init_colorit()
 
 
 def get_Xero_Contacts():
@@ -28,7 +27,7 @@ def get_Xero_Contacts():
     # Go through pages (100 per page)
     while has_more_pages:
         page += 1
-        print(color(f"  Processing Page {page} of contacts...", Colors.orange))
+        print(f"{Fore.YELLOW}  Processing Page {page} of contacts...")
         url = f'https://api.xero.com/api.xro/2.0/Contacts?summaryOnly=True&page={page}'
         xero_contacts = utils.xero_get(url)
         if len(xero_contacts["Contacts"]) == 0:
@@ -52,13 +51,14 @@ def get_Xero_Contacts():
     return contacts
 
 def Xero_Contact_List():
-    print(color(f"Getting Member List...", Colors.white))
+    print(f"{Fore.WHITE}Getting Member List...")
     list_Contacts = get_Xero_Contacts()
+    print(f"{Fore.YELLOW}Retrieved {Fore.GREEN}{len(list_Contacts)}{Fore.YELLOW} members. Sample Listing:")
     df_contacts = pd.DataFrame(list_Contacts)
-    print(color(f"{df_contacts.head(2)}\n", Colors.blue))
+    print(f"{Fore.BLUE}{df_contacts.head(2)}\n")
     df_contacts.sort_values(by=['memberCode']).to_csv(file_name, index=False)
-    print(color(f"Written to {file_name}", Colors.white))
-    print("DONE")
+    print(f"{Fore.WHITE}Written to {file_name}")
+
 
 if __name__ == '__main__':
     Xero_Contact_List()

@@ -1,5 +1,5 @@
 """
-▶ Update a Invoices in DRAFT status. Do note: you cannot update a PAID invoice (I think).
+▶ Update a Invoices in DRAFT status with a reference value. Do note: you cannot update a PAID invoice (I think).
 ▶ Check Tenant IDs in mysecrets.py. If using Demo Tenant, get it's TenantID (Demo accounts TenantID changes)
 Use xoauth.exe to get an access token, plug that into xero_first_time.py and get the Demo Company TeenantID and update my_secrets.py
 ▶ ❗ We assume the subscription amount is the same as last year. Override manually if not so!    
@@ -32,7 +32,7 @@ def updateInvoiceReference(ref):
     pass
 
 # Just a failsafe check
-if my_secrets.xero_tenant_ID == 'f7dc56b9-fe29-43cf-be0a-a5488da4e30f':
+if my_secrets.xero_tenant_ID == 'XXX':
     print(color(f"CAREFUL!: This is STOSC PRODUCTION ACCOUNT. Are you sure?",Colors.red))
     print(color(f"Did you set NEXT Invoice Numbers? to INV-22-001? ",Colors.red))
     sys.exit(0)

@@ -20,7 +20,7 @@ init_colorit()
 # Ensure the CSV is sorted by member name
 csv_file = "csv\harvest_invoices.csv"
 list_of_well_wishers = ['W001','W002','W003','W004','W005','W006','W007']
-STOSC_WELL_WISHER_CONTACT_ID = '5d692b60-877b-41a8-9b7e-9e8caff325d3'
+STOSC_WELL_WISHER_CONTACT_ID = 'XXXXXX'
 
 def create_xero_invoice(inv):
     response =  utils.xero_post("https://api.xero.com/api.xro/2.0/Invoices/",inv)
@@ -35,7 +35,7 @@ new_invoice_data = {}
 _current_member_code = ''
 
 # Just a failsafe check
-if my_secrets.xero_tenant_ID == 'xxx':
+if my_secrets.xero_tenant_ID == 'XXX':
     print(color(f"CAREFUL!: This is STOSC PRODUCTION ACCOUNT. Are you sure?",Colors.red))
     print(color(f"Did you set NEXT Invoice Numbers? to HF-21-001? ",Colors.red))
     sys.exit(0)

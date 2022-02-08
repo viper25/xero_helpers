@@ -1,9 +1,6 @@
 """
 To Replace all Invoices with another one
 """
-import json
-import string
-
 import utils
 # https://github.com/CodeForeverAndEver/ColorIt
 from colorit import *

@@ -1,12 +1,14 @@
 """
-To get a matrix of all the members contributions for the year. This does NOT include 
+🔹To get a matrix of all the members contributions for the year (Excel output) 
+🔹Scheduled job to update member payments in DDB
+🔹Scheduled job to add accounts of interest that needs to be monitored for totals in DDB
+
+This does NOT include 
 Invoice payments (i.e. member subscription payments)
 https://developer.xero.com/documentation/api/banktransactions#GET
 Up to 100 bank transactions will be returned per call, with line items shown for each transaction, 
 when the page parameter is used e.g. page=1. The data is refreshed in DDB which is used by the Telegram bot 
 
-Also manually add accounts of interest that needs to be monitored for totals and updated to DDB to be shown
-in the bot
 """
 
 import utils
