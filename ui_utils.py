@@ -28,7 +28,7 @@ def norm_print(str):
     """
     Print normal string
     """
-    print(Fore.YELLOW + '[-] ' + Fore.WHITE + str + Fore.RESET)
+    print(Fore.YELLOW + '[-] ' + Fore.CYAN + str + Fore.RESET)
 
 def success_print(str):
     """
@@ -70,18 +70,14 @@ def print_intro():
     """
     Print program introduction
     """
-    space_print()
-    space_print()
+
     hash_print()
-    norm_print("STOSC IT")
-    norm_print("Version - " + Fore.GREEN + " 1.0.0")
-    norm_print("Last Modified On - " + Fore.GREEN + " Feb 08, 2022")
-    norm_print("Last Modified By - " + Fore.GREEN + "accounts@stosc.com")
-    norm_print("Please report feedback and suggestions to " + Fore.GREEN +
-               "accounts@stosc.com")
+    norm_print("St. Thomas Orthodox Syriaan Cathedral, Singapore ⛪")
+    norm_print("Version - " + Fore.YELLOW + " 1.0.0")
+    norm_print("Last Modified On - " + Fore.CYAN + " Feb 08, 2022")
+    norm_print("Author - " + Fore.CYAN + "accounts@stosc.com")
     hash_print()
-    space_print()
-    space_print()
+    print()
 
 def isint(str):
     """
