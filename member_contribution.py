@@ -99,6 +99,9 @@ accounts_of_interest = [
     {"AccountCode": "3240", "AccountName": "Vanitha Dinam", "keyword": "Vanitha Dinam", "Total": 0},
     {"AccountCode": "3100", "AccountName": "Liturgy Calendar", "keyword": "Liturgy", "Total": 0},
     {"AccountCode": "3240", "AccountName": "Snehasparsham", "keyword": "Snehasparsham", "Total": 0},
+    {"AccountCode": "3240", "AccountName": "Pethrutha", "keyword": "Pethrutha", "Total": 0},
+    {"AccountCode": "3100", "AccountName": "Kohne", "keyword": "Kohne", "Total": 0},
+    {"AccountCode": "3240", "AccountName": "Migrant Workers", "keyword": "Migrant", "Total": 0}
 ]
 
 write_to_csv = False
@@ -112,7 +115,7 @@ def upload_member_tx_to_ddb(df_records):
         aws_secret_access_key=my_secrets.DDB_SECRET_ACCESS_KEY,
         region_name="ap-southeast-1",
     )
-    table = resource.Table("member_payments")
+    table = resource.Table("stosc_xero_member_payments")
     print(color(f"Inserting {len(df_records)} records to DDB: {table.name}", Colors.green))
     for index, row in df_records.iterrows():
         chunk = {
@@ -226,7 +229,7 @@ def get_member_txns(since_date):
                             for account in accounts_of_interest:
                                 if (
                                     account["AccountCode"] == lineItem["AccountCode"]
-                                    and account["keyword"].upper() in lineItem["Description"].upper()
+                                    and account["keyword"].upper() in lineItem["Description"].trim().upper()
                                 ):
                                     # Update Total
                                     account['Total'] += Decimal(lineItem["LineAmount"])

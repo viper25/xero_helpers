@@ -40,7 +40,7 @@ write_to_csv = False
 
 def upload_to_ddb(df_records):
     resource = boto3.resource('dynamodb', aws_access_key_id=my_secrets.DDB_ACCESS_KEY_ID, aws_secret_access_key=my_secrets.DDB_SECRET_ACCESS_KEY, region_name='ap-southeast-1')
-    table = resource.Table('member_payments')
+    table = resource.Table('stosc_xero_member_payments')
 
     print(color(f"Inserting {len(df_records)} records to DDB",Colors.green))
     for index, row in df_records.iterrows():
