@@ -5,6 +5,8 @@ pandas
 python-dotenv
 SQLAlchemy
 pyfiglet
+mysql-connector-python
+pendulum
 # Menu 
 tabulate
 pyinstaller #Build Windows exe

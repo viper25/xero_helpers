@@ -53,6 +53,10 @@ def __db_executeQuery(sql, db, prepared=False, *args):
 
 # ----------------------------------------------------------------------------------------------------------------------
 def update_gb_eligibility(member, eligibility):
-    sql = "update family_custom fc set fc.c5 = %s where fc.c7 = %s;"
+    sql_check = "SELECT fc.c5, fc.c7 FROM family_custom fc where fc.c7 = %s"
+    crm_is_eligible = __db_executeQuery(sql_check, Databases.CRM, True, member)[0][0].lower() == 'true'
+    if crm_is_eligible == eligibility:
+        return
+    sql = "update family_custom fc set fc.c5 = %s where fc.c7 = %s"
     _result = __db_executeQuery(sql, Databases.CRM, True, str(eligibility), member)
     return _result

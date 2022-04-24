@@ -27,10 +27,10 @@ all_members = []
 since_date = datetime.now().strftime("%Y-01-01T00:00:00")
 # Next years invoices are created sometime in Dec the previous year
 since_date = "2021-12-01T00:00:00"
-# Date to compare against. This should be the date of checking. Or GB date?
-DATE_OF_GB_ELIGIBILITY_CHECK = datetime.now()
-EXLUSION_LIST = ['J035','L007']
-UPDATE_CRM_DB = False
+# Date to compare against. This should be the date of GB
+DATE_OF_GB_ELIGIBILITY_CHECK = datetime.strptime('May 8 2022  12:00AM', '%b %d %Y %I:%M%p')
+EXLUSION_LIST = ['C000','J035','L007']
+UPDATE_CRM_DB = True
 file_eligible_gb_members = "csv\\eligible_gb_members.csv"
 file_members = "csv\\xero_contacts.csv"
 # INV-21
@@ -73,11 +73,10 @@ def process_eligible_GB_members():
                                 months_paid_for = invoice["AmountPaid"] / per_month_dues
                                 if months_paid_for != 0:
                                     date_paid_till = datetime.strptime(f"{int(months_paid_for)} 1 {year}", "%m %d %Y")
-                                    r = relativedelta.relativedelta(date_paid_till, DATE_OF_GB_ELIGIBILITY_CHECK)
-                                    # Add 6 months (since per constitution a member can only be eligible for GB if arrears are 
-                                    # within 6 months)
-                                    months_eligible_for_gb = r.months + (12 * r.years) + 6
-                                    if months_eligible_for_gb > 0:
+                                    # r interval of time dues haven't been paid for as of GB date. If this is > 6 months, he's not eligible
+                                    r = relativedelta.relativedelta(date_paid_till, DATE_OF_GB_ELIGIBILITY_CHECK)  
+                                    days_diff_bw_last_payment_and_gb_date = r.months*30 + r.years*12*30 + r.days
+                                    if days_diff_bw_last_payment_and_gb_date > -180:
                                         eligibility = True
                                         print(color(f"\tSetting {Name} ({memberCode}) Eligible", Colors.green))
                                     else:
@@ -90,7 +89,7 @@ def process_eligible_GB_members():
                                     print(color(f"\tSetting {Name} ({memberCode}) Ineligible", Colors.red))
                                     break
                                 # Not yet paid for this year. Set to eligibility = True and check previous year invoices
-                                # where if not paid, it'll be set to False.
+                                # where if not paid, it'll be reset to False.
                                 elif year==datetime.now().year and datetime.now().month <= 6:
                                     eligibility = True
                                     print(color(f"\tSetting {Name} ({memberCode}) Eligible", Colors.green))
