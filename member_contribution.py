@@ -29,7 +29,7 @@ init_colorit()
 # VARIABLES & CONFIGURATION
 
 since_date = datetime.now().strftime("%Y-01-01")
-# since_date = '2020-06-15'
+since_date = '2021-01-01'
 
 bank_accounts = {"DBS": "1000", "NETS": "1001", "Cash": "1002"}
 receive_txns = []
@@ -229,7 +229,7 @@ def get_member_txns(since_date):
                             for account in accounts_of_interest:
                                 if (
                                     account["AccountCode"] == lineItem["AccountCode"]
-                                    and account["keyword"].upper() in lineItem["Description"].trim().upper()
+                                    and account["keyword"].upper() in lineItem["Description"].strip().upper()
                                 ):
                                     # Update Total
                                     account['Total'] += Decimal(lineItem["LineAmount"])
@@ -298,7 +298,7 @@ df_merged["Account"] = df_merged["AccountCode"].map(s)
 
 # Save to CSV
 if write_to_csv:
-    df_merged.to_csv("member_contributions.csv", index=False)
+    df_merged.to_csv("csv\member_contributions.csv", index=False)
 
 # Group by Contacts to show all payments from a member
 df_grouped = df_merged.groupby(["ContactID", "ContactName", "AccountCode", "Account", "Year"]).sum().reset_index()
@@ -312,7 +312,7 @@ if write_to_csv:
 # The values column automatically averages the data so should change to sum.
 df_pivoted = df_grouped.pivot_table(index="ContactName", columns="Account", values="LineAmount", aggfunc=np.sum, fill_value=0)
 if write_to_csv:
-    df_pivoted.to_csv("member_contributions_pivoted.csv", index=True)
+    df_pivoted.to_csv("csv\member_contributions_pivoted.csv", index=True)
 
 upload_account_of_interest_tx_to_ddb(accounts_of_interest)
 upload_member_tx_to_ddb(df_grouped)
