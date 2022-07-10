@@ -4,8 +4,12 @@ import pendulum
 import enum
 import logging
 from dotenv import load_dotenv
+from colorit import *
 
 load_dotenv()
+
+init_colorit()
+
 
 USER="tempwrite"
 PASSWORD=os.environ.get('STOSC_DB_WRITE_PWD')
@@ -58,5 +62,6 @@ def update_gb_eligibility(member, eligibility):
     if crm_is_eligible == eligibility:
         return
     sql = "update family_custom fc set fc.c5 = %s where fc.c7 = %s"
+    print(color(f"\t   ✏️ Changing {member} eligibility from {crm_is_eligible} to {eligibility}",Colors.orange))
     _result = __db_executeQuery(sql, Databases.CRM, True, str(eligibility), member)
     return _result

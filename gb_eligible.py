@@ -28,8 +28,8 @@ since_date = datetime.now().strftime("%Y-01-01T00:00:00")
 # Next years invoices are created sometime in Dec the previous year
 since_date = "2021-12-01T00:00:00"
 # Date to compare against. This should be the date of GB
-DATE_OF_GB_ELIGIBILITY_CHECK = datetime.strptime('May 8 2022  12:00AM', '%b %d %Y %I:%M%p')
-EXLUSION_LIST = ['C000','J035','L007']
+DATE_OF_GB_ELIGIBILITY_CHECK = datetime.strptime('24-07-2022  12:00AM', '%d-%m-%Y %I:%M%p')
+EXLUSION_LIST = ['C000','J035','L007','J072','B025']
 UPDATE_CRM_DB = True
 file_eligible_gb_members = "csv\\eligible_gb_members.csv"
 file_members = "csv\\xero_contacts.csv"
