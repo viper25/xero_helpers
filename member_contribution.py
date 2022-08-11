@@ -61,7 +61,7 @@ accounts_lookup = pd.DataFrame(
             "Other Revenue",
             "Interest Income",
             "St. Mary's League Income",
-            "Donations & Gifts",
+            "Donations & Gifts"
         ],
         "AccountCode": [
             "3010",
@@ -88,7 +88,7 @@ accounts_lookup = pd.DataFrame(
             "3220",
             "3230",
             "3240",
-            "3250",
+            "3250"
         ],
         "Total": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     }
@@ -101,7 +101,9 @@ accounts_of_interest = [
     {"AccountCode": "3240", "AccountName": "Snehasparsham", "keyword": "Snehasparsham", "Total": 0},
     {"AccountCode": "3240", "AccountName": "Pethrutha", "keyword": "Pethrutha", "Total": 0},
     {"AccountCode": "3100", "AccountName": "Kohne", "keyword": "Kohne", "Total": 0},
-    {"AccountCode": "3240", "AccountName": "Migrant Workers", "keyword": "Migrant", "Total": 0}
+    {"AccountCode": "3240", "AccountName": "Migrant Workers", "keyword": "Migrant", "Total": 0},
+    {"AccountCode": "3180", "AccountName": "Youth Car Wash", "keyword": "Car Wash", "Total": 0}
+    # {"AccountCode": "5170", "AccountName": "Altar Renovation", "keyword": "Altar Renovation", "Total": 0}
 ]
 
 df_members = pd.read_csv("csv\\xero_contacts.csv")
@@ -222,7 +224,7 @@ def get_member_txns(since_date):
                         and _txn["IsReconciled"] == True
                     ):
                         # Build the member payments matrix
-                        _receive_txns1 = {
+                        _receive_txns = {
                             # Build the output item
                             "ContactID": _txn["Contact"]["ContactID"],
                             "ContactName": _txn["Contact"]["Name"],
