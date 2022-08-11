@@ -1,15 +1,16 @@
 """
+Generate and Update GB eligible members.
+
 As of GB Date if they have dues of > 6 months (from the date of the GB) they are not eligible
 
 Let’s say annual subscription is $600 and if the member has paid $300 which is equal to 6 months. So in Sept, (Month 9) 
 he doesn't have 6 months of outstanding; only July - Sept (3 months) hence the member is eligible. 
 
 The invoices are checked to see if they were modified at the begining of this year (as they should be when creating new invoices 
-after Jan 1). If this check is not there, we will get all invoices from years past.
+after Jan 1). If this check is not there, in Xero, we will get all invoices from years past.
 
 Principle: Loop through all members. For each emmeber, check each invoice. Set eligibility to False and prove it's True by checking
 invoices. The moment you can prove eligiblity is False, break the loop and check the next member.
-
 """
 import datetime
 import utils
@@ -27,19 +28,21 @@ all_members = []
 since_date = datetime.now().strftime("%Y-01-01T00:00:00")
 # Next years invoices are created sometime in Dec the previous year
 since_date = "2021-12-01T00:00:00"
-# Date to compare against. This should be the date of GB
-DATE_OF_GB_ELIGIBILITY_CHECK = datetime.strptime('24-07-2022  12:00AM', '%d-%m-%Y %I:%M%p')
+# Date to compare against. This should be the date of GB announcement
+DATE_OF_GB_ELIGIBILITY_CHECK = datetime.strptime('10-07-2022  12:00AM', '%d-%m-%Y %I:%M%p')
 EXLUSION_LIST = ['C000','J035','L007','J072','B025']
 UPDATE_CRM_DB = True
 file_eligible_gb_members = "csv\\eligible_gb_members.csv"
 file_members = "csv\\xero_contacts.csv"
 # INV-21
 INVOICE_YEAR = f"INV-{str(date.today().year)[2:]}"
-# Use this to ensure that ColorIt will be usable by certain command line interfaces
+# Initialize the Set that shows members who have changed their GB status 
+members_status_change_eligible = set()
+members_status_change_ineligible= set()
 init_colorit()
 
 def update_CRM(m, e):
-    db.update_gb_eligibility(m, e)
+    db.update_gb_eligibility(m, e, members_status_change_eligible, members_status_change_ineligible)
 
 def process_eligible_GB_members():
     # Loop through all customers
@@ -95,7 +98,7 @@ def process_eligible_GB_members():
                                     print(color(f"\tSetting {Name} ({memberCode}) Eligible", Colors.green))
 
             all_members.append({"MemberCode": memberCode, "Name": Name, "Eligibility": eligibility})
-            if UPDATE_CRM_DB: 
+            if UPDATE_CRM_DB:
                 update_CRM(memberCode, eligibility)
     return all_members
 
@@ -105,4 +108,6 @@ if __name__ == "__main__":
     members = process_eligible_GB_members()
     df = pd.DataFrame(members)
     df.to_csv(file_eligible_gb_members, index=False)
+    print(f"\n⛔ Members who became ineligible: {members_status_change_ineligible}")
+    print(f"✅ Members who became eligible: {members_status_change_eligible}")
     print("DONE")
