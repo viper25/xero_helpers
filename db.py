@@ -1,20 +1,20 @@
-import os
 import mysql.connector
-import pendulum
 import enum
 import logging
 from dotenv import load_dotenv
 from colorit import *
-
-load_dotenv()
+import tomli
 
 init_colorit()
 
+# Load config
+with open("config.toml", "rb") as f:
+    config = tomli.load(f)
 
-USER="tempwrite"
-PASSWORD=os.environ.get('STOSC_DB_WRITE_PWD')
-HOST=os.environ.get('STOSC_DB_HOST')
-PORT=3306
+USER = config['database']['USER']
+PASSWORD = config['database']['STOSC_DB_WRITE_PWD']
+HOST = config['database']['STOSC_DB_HOST']
+PORT = 3306
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger=logging.getLogger(__name__)

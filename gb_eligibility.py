@@ -9,7 +9,7 @@ he doesn't have 6 months of outstanding; only July - Sept (3 months) hence the m
 The invoices are checked to see if they were modified at the begining of this year (as they should be when creating new invoices 
 after Jan 1). If this check is not there, in Xero, we will get all invoices from years past.
 
-Principle: Loop through all members. For each emmeber, check each invoice. Set eligibility to False and prove it's True by checking
+Principle: Loop through all members. For each member, check each invoice. Set eligibility to False and prove it's True by checking
 invoices. The moment you can prove eligiblity is False, break the loop and check the next member.
 """
 import datetime
@@ -22,6 +22,11 @@ import pandas as pd
 from datetime import date, datetime
 from dateutil import relativedelta
 import db
+import tomli
+
+# Load config
+with open("config.toml", "rb") as f:
+    config = tomli.load(f)
 
 all_members = []
 # For all invoices Updated after since_date i.e. created this year
@@ -29,11 +34,11 @@ since_date = datetime.now().strftime("%Y-01-01T00:00:00")
 # Next years invoices are created sometime in Dec the previous year
 since_date = "2021-12-01T00:00:00"
 # Date to compare against. This should be the date of GB announcement
-DATE_OF_GB_ELIGIBILITY_CHECK = datetime.strptime('10-07-2022  12:00AM', '%d-%m-%Y %I:%M%p')
-EXLUSION_LIST = ['C000','J035','L007','J072','B025']
-UPDATE_CRM_DB = True
-file_eligible_gb_members = "csv\\eligible_gb_members.csv"
-file_members = "csv\\xero_contacts.csv"
+DATE_OF_GB_ELIGIBILITY_CHECK = datetime.strptime(config['gb_eligibility']['DATE_OF_GB_ELIGIBILITY_CHECK_STR'], '%d-%m-%Y %I:%M%p')
+EXLUSION_LIST = config['gb_eligibility']['EXLUSION_LIST']
+UPDATE_CRM_DB = config['gb_eligibility']['UPDATE_CRM_DB']
+FILE_ELIGIBLE_GB_MEMBERS = config['gb_eligibility']['FILE_ELIGIBLE_GB_MEMBERS']
+FILE_MEMBERS = config['gb_eligibility']['FILE_MEMBERS']
 # INV-21
 INVOICE_YEAR = f"INV-{str(date.today().year)[2:]}"
 # Initialize the Set that shows members who have changed their GB status 
@@ -45,8 +50,8 @@ def update_CRM(m, e):
     db.update_gb_eligibility(m, e, members_status_change_eligible, members_status_change_ineligible)
 
 def process_eligible_GB_members():
-    # Loop through all customers
-    with open(file_members, "r") as f:
+    # Loop through all members
+    with open(FILE_MEMBERS, "r") as f:
         for line in f:
             eligibility = False
             line = line.strip()
@@ -65,7 +70,7 @@ def process_eligible_GB_members():
                             # If latest years subscription has been paid then he's considered eligible.
                             if invoice["InvoiceNumber"].startswith(INVOICE_YEAR) and invoice["Status"] == "PAID":
                                 eligibility = True
-                                print(color(f"\tSetting {Name} ({memberCode}) Eligible", Colors.green))
+                                print(color(f"\t{Name} ({memberCode}) is Eligible", Colors.green))
                                 break
                             if invoice["Status"] == "PAID":
                                 continue
@@ -84,7 +89,7 @@ def process_eligible_GB_members():
                                         print(color(f"\tSetting {Name} ({memberCode}) Eligible", Colors.green))
                                     else:
                                         eligibility = False
-                                        print(color(f"\tSetting {Name} ({memberCode}) Ineligible", Colors.red))
+                                        print(color(f"\t{Name} ({memberCode}) is Ineligible", Colors.red))
                                         break
                                 # Has not paid anything for the past year. Not eligible. No need to check further.
                                 elif year<datetime.now().year and months_paid_for ==0:
@@ -107,7 +112,7 @@ def process_eligible_GB_members():
 if __name__ == "__main__":
     members = process_eligible_GB_members()
     df = pd.DataFrame(members)
-    df.to_csv(file_eligible_gb_members, index=False)
+    df.to_csv(FILE_ELIGIBLE_GB_MEMBERS, index=False)
     print(f"\n⛔ Members who became ineligible: {members_status_change_ineligible}")
     print(f"✅ Members who became eligible: {members_status_change_eligible}")
     print("DONE")

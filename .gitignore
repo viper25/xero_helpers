@@ -140,3 +140,4 @@ my_secrets.py
 .vscode/
 
 *.rc
+*.toml
