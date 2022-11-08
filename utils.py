@@ -26,8 +26,7 @@ def year_start():
 # ------------------------------------------------------
 # Refresh access_token. Use the refresh_token to keep the access_token "fresh" every 30 mins. 
 def __xero_get_Access_Token():
-    # Get current refresh token
-    
+    # Get current refresh token. Use xoauth.exe to generate a new one if it's expired    
     response=table.query(KeyConditionExpression=Key('token').eq(REFRESH_TOKEN_KEY))
     old_refresh_token = response['Items'][0]['refresh_token']
     

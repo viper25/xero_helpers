@@ -1,9 +1,10 @@
 """
 ▶ Create New invoices - for Harvest festival or Annual Subscription
-▶ Input file for harvest Festival is a CSV *HAS* to have list ordered by Member Code. Format:
+▶ Input file for harvest Festival is a CSV *HAS* to have list ORDERED by Member Code. Format:
     61-Mango & Pineapple,W002-Josey,200
     62-Pineapple,W002-Josey,120
-▶ Set the NEXT invoice in Xero (https://go.xero.com/InvoiceSettings/InvoiceSettings.aspx) to HF-21-0001
+▶ Set the NEXT invoice in Xero (https://go.xero.com/InvoiceSettings/InvoiceSettings.aspx) to HF-22-0001
+    Do remember to revert back to INV-22-XXX after the harvest festival invoices are generated
 ▶ Account Code 3200 to exist 
 ▶ Check Tenant IDs in mysecrets.py. If using Demo Tenant, get it's TenantID using xero_first_time.py
 ▶ ❗ Set Variables Below 
@@ -20,14 +21,14 @@ init_colorit()
 # Ensure the CSV is sorted by member name
 csv_file = "csv\harvest_invoices.csv"
 list_of_well_wishers = ['W001','W002','W003','W004','W005','W006','W007']
-STOSC_WELL_WISHER_CONTACT_ID = 'XXXXXX'
+STOSC_WELL_WISHER_CONTACT_ID = 'xxx'
 
 def create_xero_invoice(inv):
     response =  utils.xero_post("https://api.xero.com/api.xro/2.0/Invoices/",inv)
-    if response.status_code == 200:
-        return response.json()        
+    if response['Status'] == "OK":
+        return response
     else:
-        print(color(f"{response.json()['Elements'][0]['ValidationErrors'][0]['Message']}",Colors.red))
+        print(color(f"{response['Elements'][0]['ValidationErrors'][0]['Message']}",Colors.red))
         return None
 
 # Initialize variables
@@ -35,9 +36,10 @@ new_invoice_data = {}
 _current_member_code = ''
 
 # Just a failsafe check
-if my_secrets.xero_tenant_ID == 'XXX':
+if my_secrets.xero_tenant_ID == 'xxx':
     print(color(f"CAREFUL!: This is STOSC PRODUCTION ACCOUNT. Are you sure?",Colors.red))
     print(color(f"Did you set NEXT Invoice Numbers? to HF-21-001? ",Colors.red))
+    print(color(f"Is your CSV ordered by member code? ",Colors.red))
     sys.exit(0)
 
 with open(csv_file, 'r') as f:
@@ -67,29 +69,29 @@ with open(csv_file, 'r') as f:
                 else:
                     _contactID = utils.get_ContactID(member_code_from_file)
             if _contactID:        
-                print(color(f"Processing {item} by {member} for ${price}",Colors.white))
+                print(color(f"Processing {item} for {member} for ${price}",Colors.white))
                 _current_member_code = member_code_from_file
                 contact = {}
-                lineItems = {}
+                lineItem = {}
                 # Should we list each item individually? 
-                lineItems['Description'] = item
-                lineItems['Quantity'] = 1.0
-                lineItems['UnitAmount'] = price
-                lineItems['TaxType'] ="NONE"
-                lineItems['AccountCode'] = '3200'
+                lineItem['Description'] = item
+                lineItem['Quantity'] = 1.0
+                lineItem['UnitAmount'] = price
+                lineItem['TaxType'] ="NONE"
+                lineItem['AccountCode'] = '3200'
 
 
                 new_invoice_data['Type'] = 'ACCREC'
                 contact['ContactID'] = _contactID
                 new_invoice_data['Contact'] = contact
-                new_invoice_data['Date'] = '2021-11-07'
-                new_invoice_data['DueDate'] = '2021-12-01'
+                new_invoice_data['Date'] = '2022-11-07'
+                new_invoice_data['DueDate'] = '2022-12-01'
                 new_invoice_data['LineAmountTypes'] = 'NoTax'
-                new_invoice_data['Reference'] = 'Harvest Festival 2021'
+                new_invoice_data['Reference'] = 'Harvest Festival 2022'
                 new_invoice_data['Status'] = 'AUTHORISED'
 
                 # Add the Line Item to the Invoice
-                new_invoice_data['LineItems'].append(lineItems)
+                new_invoice_data['LineItems'].append(lineItem)
             else:
                 print(color(f"ERROR: No ContactID for {member_code_from_file}",Colors.red))
     

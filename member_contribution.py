@@ -8,7 +8,6 @@ Invoice payments (i.e. member subscription payments)
 https://developer.xero.com/documentation/api/banktransactions#GET
 Up to 100 bank transactions will be returned per call, with line items shown for each transaction, 
 when the page parameter is used e.g. page=1. The data is refreshed in DDB which is used by the Telegram bot 
-
 """
 
 import utils
@@ -315,6 +314,12 @@ if write_to_csv:
     df_merged.to_csv("csv\member_contributions.csv", index=False)
 
 # Group by Contacts to show all payments from a member
+'''
+TODO:
+FutureWarning: The default value of numeric_only in DataFrameGroupBy.sum is deprecated. In a future version, 
+numeric_only will default to False. Either specify numeric_only or select only columns which should be valid for the function.
+'''
+
 df_grouped = df_merged.groupby(["ContactID", "ContactName", "MemberID", "AccountCode", "Account", "Year"]).sum().reset_index()
 print(color(df_grouped.sort_values(by=["ContactName"]).head(5), (200, 200, 200)))
 if write_to_csv:
