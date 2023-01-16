@@ -32,7 +32,7 @@ all_members = []
 # For all invoices Updated after since_date i.e. created this year
 since_date = datetime.now().strftime("%Y-01-01T00:00:00")
 # Next years invoices are created sometime in Dec the previous year
-since_date = "2021-12-01T00:00:00"
+since_date = "2022-12-01T00:00:00"
 # Date to compare against. This should be the date of GB announcement
 DATE_OF_GB_ELIGIBILITY_CHECK = datetime.strptime(config['gb_eligibility']['DATE_OF_GB_ELIGIBILITY_CHECK_STR'], '%d-%m-%Y %I:%M%p')
 EXLUSION_LIST = config['gb_eligibility']['EXLUSION_LIST']

@@ -71,3 +71,8 @@ def update_gb_eligibility(member, current_eligibility_status, members_status_cha
             members_status_change_ineligible.add(member)
         _result = __db_executeQuery(sql, Databases.CRM, True, str(current_eligibility_status), member)
         return None
+
+def get_address(member_code: str):
+    sql = "select f.fam_Zip from family_fam f where SUBSTRING(f.fam_Name,POSITION('(' IN f.fam_Name)+1,4) = %s"
+    _result = __db_executeQuery(sql, Databases.CRM, True, member_code)
+    return _result[0][0]
