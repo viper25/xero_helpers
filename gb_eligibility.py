@@ -64,43 +64,46 @@ def process_eligible_GB_members():
                 print(color(f"Processing {Name} ({memberCode})", Colors.blue))
                 invoices = utils.get_Invoices(contactID)
                 if invoices["Invoices"]:
-                    for invoice in invoices["Invoices"]:
-                        if invoice['InvoiceNumber'].startswith('INV-'):
-                            print(color(f"\t   {invoice['InvoiceNumber']}: {invoice['Status']}. {invoice['AmountDue']}/{invoice['Total']}", Colors.white))
-                            # If latest years subscription has been paid then he's considered eligible.
-                            if invoice["InvoiceNumber"].startswith(INVOICE_YEAR) and invoice["Status"] == "PAID":
-                                eligibility = True
-                                print(color(f"\t{Name} ({memberCode}) is Eligible", Colors.green))
-                                break
-                            if invoice["Status"] == "PAID":
-                                continue
-                            elif invoice["Status"] == "AUTHORISED":
-                                # Check year
-                                year = int("20" + invoice["InvoiceNumber"].split("-")[1])
-                                per_month_dues = invoice["Total"] / 12
-                                months_paid_for = invoice["AmountPaid"] / per_month_dues
-                                if months_paid_for != 0:
-                                    date_paid_till = datetime.strptime(f"{int(months_paid_for)} 1 {year}", "%m %d %Y")
-                                    # r interval of time dues haven't been paid for as of GB date. If this is > 6 months, he's not eligible
-                                    r = relativedelta.relativedelta(date_paid_till, DATE_OF_GB_ELIGIBILITY_CHECK)  
-                                    days_diff_bw_last_payment_and_gb_date = r.months*30 + r.years*12*30 + r.days
-                                    if days_diff_bw_last_payment_and_gb_date > -180:
-                                        eligibility = True
-                                        print(color(f"\tSetting {Name} ({memberCode}) Eligible", Colors.green))
-                                    else:
-                                        eligibility = False
-                                        print(color(f"\t{Name} ({memberCode}) is Ineligible", Colors.red))
-                                        break
-                                # Has not paid anything for the past year. Not eligible. No need to check further.
-                                elif year<datetime.now().year and months_paid_for ==0:
-                                    eligibility = False
-                                    print(color(f"\tSetting {Name} ({memberCode}) Ineligible", Colors.red))
-                                    break
-                                # Not yet paid for this year. Set to eligibility = True and check previous year invoices
-                                # where if not paid, it'll be reset to False.
-                                elif year==datetime.now().year and datetime.now().month <= 6:
+                    subscription_invoices = list(filter(lambda x: x['InvoiceNumber'].startswith('INV-'), invoices["Invoices"]))
+                    # Sorted in ascending order (2022, 2023 etc.)
+                    subscription_invoices_sorted = sorted(subscription_invoices, key=lambda x: x['InvoiceNumber'])
+                    for invoice in subscription_invoices_sorted:
+                        print(color(f"\t   {invoice['InvoiceNumber']}: {invoice['Status']}. Due: ${invoice['AmountDue']}. Total: ${invoice['Total']}", Colors.white))
+                        # If latest years subscription has been paid then he's considered eligible.
+                        if invoice["InvoiceNumber"].startswith(INVOICE_YEAR) and invoice["Status"] == "PAID":
+                            eligibility = True
+                            print(color(f"\t{Name} ({memberCode}) is Eligible", Colors.green))
+                            break
+                        if invoice["Status"] == "PAID":
+                            continue
+                        elif invoice["Status"] == "AUTHORISED":
+                            # Check year
+                            year_of_invoice = int("20" + invoice["InvoiceNumber"].split("-")[1])
+                            per_month_dues = invoice["Total"] / 12
+                            months_paid_for = invoice["AmountPaid"] / per_month_dues
+                            if months_paid_for != 0:
+                                date_paid_till = datetime.strptime(f"{int(months_paid_for)} 1 {year_of_invoice}", "%m %d %Y")
+                                # r interval of time dues haven't been paid for as of GB date. If this is > 6 months, he's not eligible
+                                r = relativedelta.relativedelta(date_paid_till, DATE_OF_GB_ELIGIBILITY_CHECK)  
+                                days_diff_bw_last_payment_and_gb_date = r.months*30 + r.years*12*30 + r.days
+                                if days_diff_bw_last_payment_and_gb_date > -180:
                                     eligibility = True
                                     print(color(f"\tSetting {Name} ({memberCode}) Eligible", Colors.green))
+                                else:
+                                    eligibility = False
+                                    print(color(f"\t{Name} ({memberCode}) is Ineligible", Colors.red))
+                                    break
+                            # Has not paid in the prior year, Not eligible. No need to check further.
+                            elif year_of_invoice<datetime.now().year and months_paid_for==0:
+                                eligibility = False
+                                print(color(f"\tSetting {Name} ({memberCode}) Ineligible", Colors.red))
+                                break
+                            # Not yet paid for this year. Set to eligibility = True and check previous year invoices
+                            # where if not paid, it'll be reset to False.
+                            # If the invoice being checked is for the current year, but it's not 6 months yet, he is toggle to eligibile
+                            elif year_of_invoice==datetime.now().year and datetime.now().month <= 6:
+                                eligibility = True
+                                print(color(f"\tSetting {Name} ({memberCode}) Eligible", Colors.green))
 
             all_members.append({"MemberCode": memberCode, "Name": Name, "Eligibility": eligibility})
             if UPDATE_CRM_DB:

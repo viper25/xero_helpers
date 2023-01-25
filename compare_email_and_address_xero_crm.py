@@ -6,7 +6,7 @@ import db
 import utils
 from colorama import init, Fore
 
-init()
+init(autoreset=True)
 
 # Load config
 with open("config.toml", "rb") as f:
@@ -22,6 +22,12 @@ def get_zip_from_xero(contactID:str)->str:
     elif 'PostalCode' in xero_contacts['Contacts'][0]['Addresses'][1]:
         return xero_contacts['Contacts'][0]['Addresses'][1]['PostalCode']
 
+def get_email_from_xero(contactID:str)->str:
+    url = f'https://api.xero.com/api.xro/2.0/Contacts/{contactID}'
+    xero_contacts = utils.xero_get(url)
+    if 'EmailAddress' in xero_contacts['Contacts'][0] and xero_contacts['Contacts'][0]['EmailAddress'] != "":
+        return xero_contacts['Contacts'][0]['EmailAddress']
+
 # Loop through active users in CRM
 with open(FILE_MEMBERS, "r") as f:
     for line in f:
@@ -34,8 +40,13 @@ with open(FILE_MEMBERS, "r") as f:
             if memberCode == 'C000':
                 continue
             # print(f"{Fore.WHITE}Comparing addresses for {Name} ({memberCode})")
-            zip_from_crm = db.get_address(memberCode)
-            zip_from_xero = get_zip_from_xero(contactID)
-            if zip_from_crm.strip() != zip_from_xero.strip():
-                print(f"{Fore.RED}{Name} ({memberCode}) has {zip_from_crm} in CRM and {zip_from_xero} in Xero")
+            email_from_crm = db.get_email(memberCode)
+            email_from_xero = get_email_from_xero(contactID)
+            if (email_from_crm and email_from_xero) and (email_from_crm.strip() != email_from_xero.strip()):
+                print(f"{Fore.RED}{Name} ({memberCode}) has {email_from_crm} in CRM and {email_from_xero} in Xero")
+
+            # zip_from_crm = db.get_address(memberCode)
+            # zip_from_xero = get_zip_from_xero(contactID)
+            # if zip_from_crm.strip() != zip_from_xero.strip():
+            #     print(f"{Fore.RED}{Name} ({memberCode}) has {zip_from_crm} in CRM and {zip_from_xero} in Xero")
 print("Done")

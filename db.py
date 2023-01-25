@@ -76,3 +76,8 @@ def get_address(member_code: str):
     sql = "select f.fam_Zip from family_fam f where SUBSTRING(f.fam_Name,POSITION('(' IN f.fam_Name)+1,4) = %s"
     _result = __db_executeQuery(sql, Databases.CRM, True, member_code)
     return _result[0][0]
+
+def get_email(member_code: str):
+    sql = "select fam_Email from family_fam f where SUBSTRING(f.fam_Name,POSITION('(' IN f.fam_Name)+1,4) = %s"
+    _result = __db_executeQuery(sql, Databases.CRM, True, member_code)
+    return _result[0][0]

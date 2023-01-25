@@ -4,19 +4,21 @@ import boto3
 from boto3.dynamodb.conditions import Key
 from datetime import datetime
 import requests
-import my_secrets
-import os
 import logging
 from colorit import *
 import time
+import tomli
+
+with open("config.toml", "rb") as f:
+    toml_dict = tomli.load(f)
 
 # Use this to ensure that ColorIt will be usable by certain command line interfaces
 init_colorit()
 
 # TODO Hardcoded Tenant ID
-xero_tenant_id = my_secrets.xero_tenant_ID
+xero_tenant_id = toml_dict['xero']['XERO_TENANT_ID']
 REFRESH_TOKEN_KEY = "xero-helpers"
-resource = boto3.resource('dynamodb', aws_access_key_id=os.environ.get('STOSC_DDB_ACCESS_KEY_ID'), aws_secret_access_key=os.environ.get('STOSC_DDB_SECRET_ACCESS_KEY'), region_name='ap-southeast-1')
+resource = boto3.resource('dynamodb', aws_access_key_id=toml_dict['ddb_srvc_stosc_members']['STOSC_DDB_ACCESS_KEY_ID'], aws_secret_access_key=toml_dict['ddb_srvc_stosc_members']['STOSC_DDB_SECRET_ACCESS_KEY'], region_name='ap-southeast-1')
 table = resource.Table('stosc_xero_tokens')
 #-----------------------------------------------------------------------------------    
 # Return Jan 1 of current year. For Xero accounting methods
@@ -34,7 +36,7 @@ def __xero_get_Access_Token():
     response = requests.post(url,headers={
         'Content-Type' : 'application/x-www-form-urlencoded'},data={
             'grant_type': 'refresh_token',            
-            'client_id' : os.environ.get('XERO_CLIENT_ID'),
+            'client_id' : toml_dict['xero']['XERO_CLIENT_ID'],
             'refresh_token': old_refresh_token
             })
     response_dict = response.json()
