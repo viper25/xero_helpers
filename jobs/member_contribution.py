@@ -60,7 +60,8 @@ accounts_lookup = pd.DataFrame(
             "Other Revenue",
             "Interest Income",
             "St. Mary's League Income",
-            "Donations & Gifts"
+            "Donations & Gifts",
+            "Kohne Sunday"
         ],
         "AccountCode": [
             "3010",
@@ -87,9 +88,10 @@ accounts_lookup = pd.DataFrame(
             "3220",
             "3230",
             "3240",
-            "3250"
+            "3250",
+            "3310"
         ],
-        "Total": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "Total": [0] * 26
     }
 )
 
@@ -99,7 +101,6 @@ accounts_of_interest = [
     {"AccountCode": "3100", "AccountName": "Liturgy Calendar", "keyword": "Liturgy", "Total": 0},
     {"AccountCode": "3240", "AccountName": "Snehasparsham", "keyword": "Snehasparsham", "Total": 0},
     {"AccountCode": "3240", "AccountName": "Pethrutha", "keyword": "Pethrutha", "Total": 0},
-    {"AccountCode": "3100", "AccountName": "Kohne", "keyword": "Kohne", "Total": 0},
     {"AccountCode": "3240", "AccountName": "Migrant Workers", "keyword": "Migrant", "Total": 0},
     {"AccountCode": "3180", "AccountName": "Youth Car Wash", "keyword": "Car Wash", "Total": 0}
     # {"AccountCode": "5170", "AccountName": "Altar Renovation", "keyword": "Altar Renovation", "Total": 0}

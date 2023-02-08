@@ -50,37 +50,6 @@ def create_xero_invoice(inv):
         print(color(f"{response.json()['Elements'][0]['ValidationErrors'][0]['Message']}", Colors.red))
         return None
 
-def get_last_subscription_amount_by_contact_id(contact_id):
-    list_last_invoice = []
-    list_of_invoices = []
-    subscription_amt = None
-    list_of_invoices = utils.xero_get(
-        f"https://api.xero.com/api.xro/2.0/Invoices?ContactIDs={contact_id}&Statuses=AUTHORISED,PAID"
-    )
-    if len(list_of_invoices["Invoices"]) > 0:
-        # Get latest subscription amount
-        list_last_invoice = [
-            x for x in list_of_invoices["Invoices"] if x["InvoiceNumber"].startswith(SEARCH_STRING_FOR_PREVIOUS_SUBSCRIPTION)
-        ]
-        if len(list_last_invoice) == 1:
-            subscription_amt = list_last_invoice[0]["Total"]
-            if "pro" in list_last_invoice[0]['LineItems'][0]['Description']:
-                utils.my_logger.info(f"\t{member_code} has pro-rated subscription - fix manually",Colors.orange)
-        elif len(list_last_invoice) == 0:
-            utils.my_logger.warn(
-                f"{member_code} has no previous subscription for '{SEARCH_STRING_FOR_PREVIOUS_SUBSCRIPTION}-*'; Skipping"
-            )
-            subscription_amt = None
-        elif len(list_last_invoice) > 1:
-            utils.my_logger.warn(
-                f"{member_code} has more than one subscription for '{SEARCH_STRING_FOR_PREVIOUS_SUBSCRIPTION}-*'; setting to 0"
-            )
-            subscription_amt = 0
-    else:
-        utils.my_logger.warn(f"No Invoices found for {member_code}")
-        return None
-    return subscription_amt
-
 # Initialize variables
 new_invoice_data = {}
 
@@ -103,7 +72,7 @@ with open(csv_file, "r") as f:
                 lineItems = {}
                 lineItems["Description"] = INVOICE_DESC
                 lineItems["Quantity"] = 1.0
-                last_subscription_amount = get_last_subscription_amount_by_contact_id(_contactID)
+                last_subscription_amount = get_last_subscription_amount_by_contact_id(_contactID, member_code)
                 if last_subscription_amount:
                     lineItems["UnitAmount"] = last_subscription_amount
                     lineItems["TaxType"] = "NONE"
