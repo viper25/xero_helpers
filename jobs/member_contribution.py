@@ -96,13 +96,14 @@ accounts_lookup = pd.DataFrame(
 )
 
 # Certain accounts to be monitored for display in Bot e.g. "Vanitha Dinam"
-accounts_of_interest = [
+tracked_accounts = [
     {"AccountCode": "3240", "AccountName": "Vanitha Dinam", "keyword": "Vanitha Dinam", "Total": 0},
     {"AccountCode": "3100", "AccountName": "Liturgy Calendar", "keyword": "Liturgy", "Total": 0},
     {"AccountCode": "3240", "AccountName": "Snehasparsham", "keyword": "Snehasparsham", "Total": 0},
     {"AccountCode": "3240", "AccountName": "Pethrutha", "keyword": "Pethrutha", "Total": 0},
     {"AccountCode": "3240", "AccountName": "Migrant Workers", "keyword": "Migrant", "Total": 0},
-    {"AccountCode": "3180", "AccountName": "Youth Car Wash", "keyword": "Car Wash", "Total": 0}
+    {"AccountCode": "3180", "AccountName": "Youth Car Wash", "keyword": "Car Wash", "Total": 0},
+    {"AccountCode": "5170", "AccountName": "Parsonage Repair", "keyword": "parsonage2022", "Total": 0}
     # {"AccountCode": "5170", "AccountName": "Altar Renovation", "keyword": "Altar Renovation", "Total": 0}
 ]
 
@@ -172,7 +173,6 @@ def get_member_ID(_str_name):
 
 # https://api-explorer.xero.com/accounting/banktransactions/getbanktransactions?query-where=BankAccount.Code%3D%3D%221000%22&query-page=1&header-if-modified-since=2021-04-20
 def get_member_txns(since_date):
-
     print(color(f"\nProcessing Member Transactions\n================", Colors.blue))
     for bank_account in bank_accounts.items():
         # Reset page counter for each account (DBS, NETS etc.)
@@ -214,46 +214,30 @@ def get_member_txns(since_date):
                     )
                 ]
                 receive_txns.extend(_receive_txns)
-
-                # Track accounts of interest
-                for _txn in txns["BankTransactions"]:
-                    if (
-                        # Only those tnxs that are payments to STOSC
-                        _txn["Type"] == "RECEIVE"
-                        and _txn["Status"] == "AUTHORISED"
-                        and _txn["IsReconciled"] == True
-                    ):
-                        # Build the member payments matrix
-                        _receive_txns = {
-                            # Build the output item
-                            "ContactID": _txn["Contact"]["ContactID"],
-                            "ContactName": _txn["Contact"]["Name"],
-                            "MemberID": get_member_ID(_txn["Contact"]["ContactID"]),
-                            "BankAccount": _txn["BankAccount"]["Name"],
-                            # "Year": _txn['DateString'].split('-')[0],
-                            "Year": str(utils.parse_Xero_Date(_txn["Date"]).year),
-                            # Nested dict
-                            "Line Items": _txn["LineItems"],
-                            "Net Amount": _txn["Total"],
-                            "Status": _txn["Status"],
-                        }
-                        # Loop through each line item and see if it matches any "accounts of interest"
-                        for lineItem in _txn["LineItems"]:
-                            for account in accounts_of_interest:
-                                if (
-                                    account["AccountCode"] == lineItem["AccountCode"]
-                                    and account["keyword"].upper() in lineItem["Description"].strip().upper()
-                                ):
-                                    # Update Total
-                                    account['Total'] += Decimal(lineItem["LineAmount"])
-                                    account["modfied_ts"] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+                # # Track accounts of interest
+                update_tracked_accounts_for_member_payments(txns)
 
     return receive_txns
+
+# Update the tracked projects list based on payments by members
+def update_tracked_accounts_for_member_payments(txns):
+    for _txn in txns["BankTransactions"]:
+        if _txn["Type"] in ["RECEIVE", "SPEND"] and _txn["Status"] == "AUTHORISED" and _txn["IsReconciled"] == True:
+            # Loop through each line item and see if it matches any "accounts of interest"
+            for lineItem in _txn["LineItems"]:
+                for tracked_account in tracked_accounts:
+                    if (
+                        tracked_account["AccountCode"] == lineItem["AccountCode"]
+                        and tracked_account["keyword"].upper() in lineItem["Description"].strip().upper()
+                    ):
+                        # Update Total
+                        tracked_account["Total"] += Decimal(lineItem["LineAmount"])
+                        tracked_account["modfied_ts"] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
 
 # https://api-explorer.xero.com/accounting/payments/getpayments?query-page=1&query-where=PaymentType%3D%22ACCRECPAYMENT%22&header-if-modified-since=2021-04-25
 def get_member_invoice_payments(since_date):
-    print(color(f"Processing Member Subscriptions\n================", Colors.blue))
+    print(color(f"\nProcessing Member Subscriptions\n================", Colors.blue))
     has_more_pages = True
     page = 0
 
@@ -290,7 +274,28 @@ def get_member_invoice_payments(since_date):
             received_payments.extend(_received_payments)
     return received_payments
 
+def update_tracked_accounts_for_invoices(since_date):
+    print(color(f"Checking Invoices for Tracked accounts\n================", Colors.blue))
+    has_more_pages = True
+    page = 0
+    # Go through pages (100 txns per page)
+    while has_more_pages:
+        page += 1
+        url = f"https://api.xero.com/api.xro/2.0/Invoices?Statuses=AUTHORISED,PAID&where=Type%3D%22ACCPAY%22&page={page}"
+        _header = {"If-Modified-Since": since_date}
+        txns = utils.xero_get(url, **_header)
+        if len(txns["Invoices"]) == 0:
+            has_more_pages = False
+        else:
+            for _txns in txns['Invoices']:
+                for line in _txns['LineItems']:
+                    # Check if any line item matches an account we're tracking and if so, update the Total
+                    for tracked_account in tracked_accounts:
+                        if tracked_account["AccountCode"].startswith("5") and tracked_account["AccountCode"] == line['AccountCode'] and tracked_account["keyword"] in line['Description']:
+                            tracked_account["Total"] += Decimal(line['LineAmount'])
+                            tracked_account["modfied_ts"] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
+update_tracked_accounts_for_invoices(since_date)
 list_invoice_payments = get_member_invoice_payments(since_date)
 list_all_txns = get_member_txns(since_date)
 
@@ -334,7 +339,7 @@ df_pivoted = df_grouped.pivot_table(index=["ContactName","Year","MemberID"], col
 if write_to_csv:
     df_pivoted.to_csv("csv\member_contributions_pivoted.csv", index=True)
 
-upload_account_of_interest_tx_to_ddb(accounts_of_interest)
+upload_account_of_interest_tx_to_ddb(tracked_accounts)
 upload_member_tx_to_ddb(df_grouped)
 
 print(background(color(f"Done", (0, 0, 0)), Colors.green))

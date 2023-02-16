@@ -1,5 +1,5 @@
 #!/bin/bash
-cd /home/vibinjk/stosc_xero_jobs
+cd /home/azureuser/jobs/stosc_xero_member_contributions/
 source .env/bin/activate
 
 # virtualenv is now active, which means your PATH has been modified.
