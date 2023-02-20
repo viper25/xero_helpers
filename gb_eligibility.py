@@ -22,11 +22,11 @@ import pandas as pd
 from datetime import date, datetime
 from dateutil import relativedelta
 import db
-import tomli
+import tomllib
 
 # Load config
 with open("config.toml", "rb") as f:
-    config = tomli.load(f)
+    config = tomllib.load(f)
 
 all_members = []
 # For all invoices Updated after since_date i.e. created this year

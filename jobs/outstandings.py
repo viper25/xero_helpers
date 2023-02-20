@@ -7,7 +7,7 @@ as of a certain date
 
 import utils
 from colorama import Fore, init
-import tomli
+import tomllib
 import pandas as pd
 
 init(autoreset=True)
@@ -18,7 +18,7 @@ page = 0
 
 # # Load config
 # with open("config.toml", "rb") as f:
-#     config = tomli.load(f)
+#     config = tomllib.load(f)
 
 # def upload_to_ddb(data, type):
 #     resource = boto3.resource(

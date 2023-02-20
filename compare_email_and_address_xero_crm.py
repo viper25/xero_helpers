@@ -1,7 +1,7 @@
 '''
 Compare addresses between Xero and CRM systems
 '''
-import tomli
+import tomllib
 import db
 import utils
 from colorama import init, Fore
@@ -10,7 +10,7 @@ init(autoreset=True)
 
 # Load config
 with open("config.toml", "rb") as f:
-    config = tomli.load(f)
+    config = tomllib.load(f)
 
 FILE_MEMBERS = config['gb_eligibility']['FILE_MEMBERS']
 

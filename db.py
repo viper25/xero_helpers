@@ -3,13 +3,13 @@ import enum
 import logging
 from dotenv import load_dotenv
 from colorit import *
-import tomli
+import tomllib
 
 init_colorit()
 
 # Load config
 with open("config.toml", "rb") as f:
-    config = tomli.load(f)
+    config = tomllib.load(f)
 
 USER = config['database']['USER']
 PASSWORD = config['database']['STOSC_DB_WRITE_PWD']

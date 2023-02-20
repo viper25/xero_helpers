@@ -33,6 +33,9 @@ since_date = datetime.now().strftime("%Y-01-01")
 bank_accounts = {"DBS": "1000", "NETS": "1001", "Cash": "1002"}
 receive_txns = []
 received_payments = []
+tracking_categories = {
+    "'ce1b1125-b513-47de-9649-dd650f2b221e'": 'Parsonage 2022'
+}
 accounts_lookup = pd.DataFrame(
     {
         "label": [
@@ -95,18 +98,9 @@ accounts_lookup = pd.DataFrame(
     }
 )
 
-# Certain accounts to be monitored for display in Bot e.g. "Vanitha Dinam"
-tracked_accounts = [
-    {"AccountCode": "3240", "AccountName": "Vanitha Dinam", "keyword": "Vanitha Dinam", "Total": 0},
-    {"AccountCode": "3100", "AccountName": "Liturgy Calendar", "keyword": "Liturgy", "Total": 0},
-    {"AccountCode": "3240", "AccountName": "Snehasparsham", "keyword": "Snehasparsham", "Total": 0},
-    {"AccountCode": "3240", "AccountName": "Pethrutha", "keyword": "Pethrutha", "Total": 0},
-    {"AccountCode": "3240", "AccountName": "Migrant Workers", "keyword": "Migrant", "Total": 0},
-    {"AccountCode": "3180", "AccountName": "Youth Car Wash", "keyword": "Car Wash", "Total": 0},
-    {"AccountCode": "5170", "AccountName": "Parsonage Repair", "keyword": "parsonage2022", "Total": 0}
-    # {"AccountCode": "5170", "AccountName": "Altar Renovation", "keyword": "Altar Renovation", "Total": 0}
-]
 
+#TODO: Fix path for Linux
+# df_members = pd.read_csv("csv//xero_contacts.csv")
 df_members = pd.read_csv("csv\\xero_contacts.csv")
 
 write_to_csv = False
@@ -132,20 +126,6 @@ def upload_member_tx_to_ddb(df_records):
             "modfied_ts": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
         }
         table.put_item(Item=chunk)
-
-
-def upload_account_of_interest_tx_to_ddb(list_of_accounts):
-    resource = boto3.resource(
-        "dynamodb",
-        aws_access_key_id=my_secrets.DDB_ACCESS_KEY_ID,
-        aws_secret_access_key=my_secrets.DDB_SECRET_ACCESS_KEY,
-        region_name="ap-southeast-1",
-    )
-    # TODO Truncate the table before inserting
-    table = resource.Table("stosc_xero_accounts_of_interest")
-    print(color(f"Inserting {len(list_of_accounts)} records to DDB: {table.name}", Colors.green))
-    for _row in list_of_accounts:
-        table.put_item(Item=_row)
 
 
 # Operations on the Transactions DataFrame
@@ -214,26 +194,7 @@ def get_member_txns(since_date):
                     )
                 ]
                 receive_txns.extend(_receive_txns)
-                # # Track accounts of interest
-                update_tracked_accounts_for_member_payments(txns)
-
     return receive_txns
-
-# Update the tracked projects list based on payments by members
-def update_tracked_accounts_for_member_payments(txns):
-    for _txn in txns["BankTransactions"]:
-        if _txn["Type"] in ["RECEIVE", "SPEND"] and _txn["Status"] == "AUTHORISED" and _txn["IsReconciled"] == True:
-            # Loop through each line item and see if it matches any "accounts of interest"
-            for lineItem in _txn["LineItems"]:
-                for tracked_account in tracked_accounts:
-                    if (
-                        tracked_account["AccountCode"] == lineItem["AccountCode"]
-                        and tracked_account["keyword"].upper() in lineItem["Description"].strip().upper()
-                    ):
-                        # Update Total
-                        tracked_account["Total"] += Decimal(lineItem["LineAmount"])
-                        tracked_account["modfied_ts"] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-
 
 # https://api-explorer.xero.com/accounting/payments/getpayments?query-page=1&query-where=PaymentType%3D%22ACCRECPAYMENT%22&header-if-modified-since=2021-04-25
 def get_member_invoice_payments(since_date):
@@ -274,28 +235,6 @@ def get_member_invoice_payments(since_date):
             received_payments.extend(_received_payments)
     return received_payments
 
-def update_tracked_accounts_for_invoices(since_date):
-    print(color(f"Checking Invoices for Tracked accounts\n================", Colors.blue))
-    has_more_pages = True
-    page = 0
-    # Go through pages (100 txns per page)
-    while has_more_pages:
-        page += 1
-        url = f"https://api.xero.com/api.xro/2.0/Invoices?Statuses=AUTHORISED,PAID&where=Type%3D%22ACCPAY%22&page={page}"
-        _header = {"If-Modified-Since": since_date}
-        txns = utils.xero_get(url, **_header)
-        if len(txns["Invoices"]) == 0:
-            has_more_pages = False
-        else:
-            for _txns in txns['Invoices']:
-                for line in _txns['LineItems']:
-                    # Check if any line item matches an account we're tracking and if so, update the Total
-                    for tracked_account in tracked_accounts:
-                        if tracked_account["AccountCode"].startswith("5") and tracked_account["AccountCode"] == line['AccountCode'] and tracked_account["keyword"] in line['Description']:
-                            tracked_account["Total"] += Decimal(line['LineAmount'])
-                            tracked_account["modfied_ts"] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-
-update_tracked_accounts_for_invoices(since_date)
 list_invoice_payments = get_member_invoice_payments(since_date)
 list_all_txns = get_member_txns(since_date)
 
@@ -339,7 +278,6 @@ df_pivoted = df_grouped.pivot_table(index=["ContactName","Year","MemberID"], col
 if write_to_csv:
     df_pivoted.to_csv("csv\member_contributions_pivoted.csv", index=True)
 
-upload_account_of_interest_tx_to_ddb(tracked_accounts)
 upload_member_tx_to_ddb(df_grouped)
 
 print(background(color(f"Done", (0, 0, 0)), Colors.green))

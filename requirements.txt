@@ -11,4 +11,3 @@ pendulum
 tabulate
 pyinstaller #Build Windows exe
 colorama
-tomli
