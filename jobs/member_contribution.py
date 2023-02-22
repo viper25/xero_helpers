@@ -10,7 +10,6 @@ Up to 100 bank transactions will be returned per call, with line items shown for
 when the page parameter is used e.g. page=1. The data is refreshed in DDB which is used by the Telegram bot 
 """
 
-import utils
 
 # https://github.com/CodeForeverAndEver/ColorIt
 from colorit import *
@@ -20,6 +19,8 @@ import boto3
 from decimal import Decimal
 import my_secrets
 from datetime import datetime
+import os
+import utils
 
 # Use this to ensure that ColorIt will be usable by certain command line interfaces
 init_colorit()
@@ -98,16 +99,13 @@ accounts_lookup = pd.DataFrame(
     }
 )
 
-
-#TODO: Fix path for Linux
-# df_members = pd.read_csv("csv//xero_contacts.csv")
-df_members = pd.read_csv("csv\\xero_contacts.csv")
+df_members = pd.read_csv(f"csv{os.sep}xero_contacts.csv")
 
 write_to_csv = False
 # ===============================================================
 
 
-def upload_member_tx_to_ddb(df_records):
+def upload_member_tx_to_ddb(records:dict):
     resource = boto3.resource(
         "dynamodb",
         aws_access_key_id=my_secrets.DDB_ACCESS_KEY_ID,
@@ -115,14 +113,14 @@ def upload_member_tx_to_ddb(df_records):
         region_name="ap-southeast-1",
     )
     table = resource.Table("stosc_xero_member_payments")
-    print(color(f"Inserting {len(df_records)} records to DDB: {table.name}", Colors.green))
-    for index, row in df_records.iterrows():
+    print(color(f"Inserting {len(records)} records to DDB: {table.name}", Colors.green))
+    for record in records:
         chunk = {
-            "ContactID": row[0],
-            "ContactName": row[1],
-            "AccountCode": f"{row[4]}_{row[2]}",
-            "Account": row[3],
-            "LineAmount": Decimal(str(row[5])),
+            "ContactID": record["ContactID"],
+            "ContactName": record["ContactName"],
+            "AccountCode": f"{record['Year']}_{record['AccountCode']}",
+            "Account": record["Account"],
+            "LineAmount": Decimal(str(record["LineAmount"])),
             "modfied_ts": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
         }
         table.put_item(Item=chunk)
@@ -138,7 +136,7 @@ def cleanup_txns_df(_df_tnxs):
     _df_tnxs["LineAmount"] = _df_tnxs["Line Items"].apply(lambda x: x.get("LineAmount"))
 
     # Remove unwanted exploded dict col
-    _df_tnxs = _df_tnxs.drop(columns=["Line Items", "BankAccount", "Net Amount"])
+    _df_tnxs = _df_tnxs.drop(columns=["Line Items", "BankAccount", "Net Amount", "Status"])
 
     return _df_tnxs
 
@@ -278,6 +276,7 @@ df_pivoted = df_grouped.pivot_table(index=["ContactName","Year","MemberID"], col
 if write_to_csv:
     df_pivoted.to_csv("csv\member_contributions_pivoted.csv", index=True)
 
-upload_member_tx_to_ddb(df_grouped)
+list_of_records = df_grouped.to_dict(orient='records')
+upload_member_tx_to_ddb(list_of_records)
 
 print(background(color(f"Done", (0, 0, 0)), Colors.green))
