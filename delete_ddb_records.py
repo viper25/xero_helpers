@@ -5,7 +5,7 @@ table_name = "stosc_xero_member_payments"
 
 dynamodb = boto3.resource(
         "dynamodb",
-        aws_access_key_id="AKIAXCSKAXHUM3FMQFFC", aws_secret_access_key="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",
+        aws_access_key_id="xxx", aws_secret_access_key="xxx",
         region_name="ap-southeast-1",
     )
 table = dynamodb.Table(table_name)
