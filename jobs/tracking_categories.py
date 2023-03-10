@@ -108,14 +108,25 @@ def check_tracking_categories(txns_with_tracking_options):
                         # Parsonage project tracking started from Dec 2022
                         if (txn["DateString"] < since_date) and (category["id"] != PARSONAGE_TRACKING_ID):
                             continue
-                        if "total" in category:
-                            # Add to existing entries
-                            category["total"] += Decimal(lineItem["LineAmount"])
-                            category["modified_ts"] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-                        else:
-                            # First entry
-                            category["total"] = Decimal(lineItem["LineAmount"])
-                            category["modified_ts"] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+                        if txn['Type'] == 'ACCPAY': 
+                            if "expense" in category:
+                                # Add to existing entries
+                                category["expense"] += Decimal(lineItem["LineAmount"])
+                                category["modified_ts"] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+                            else:
+                                # First entry
+                                category["expense"] = Decimal(lineItem["LineAmount"])
+                                category["modified_ts"] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+                        # 'RECEIVE' is for member payments. 'ACCREC' should be for invoices STOSC issues like subscription
+                        elif txn['Type'] == 'ACCREC' or txn['Type'] == 'RECEIVE':   
+                            if "income" in category:
+                                # Add to existing entries
+                                category["income"] += Decimal(lineItem["LineAmount"])
+                                category["modified_ts"] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+                            else:
+                                # First entry
+                                category["income"] = Decimal(lineItem["LineAmount"])
+                                category["modified_ts"] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
 if __name__ == '__main__':
     update_tracked_accounts_for_member_payments()
