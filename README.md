@@ -94,6 +94,4 @@ To schedule a python job, copy the `.sh` file to the server and setup a crontab 
 25 9-10,21 * * 1-6 /home/vibinjk/activesg/member_contribution.sh >/dev/null 2>&1
 ```
 
-## TO DO
-
-* Optimize use of `utils.py:19(xero_get_Access_Token)` to reuse the token and not call each time
+![Alt](https://repobeats.axiom.co/api/embed/3266057488d10fe67dc6da7d9fa68130b8f9b269.svg "Repobeats analytics image")
