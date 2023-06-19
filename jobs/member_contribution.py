@@ -47,10 +47,11 @@ accounts_lookup = pd.DataFrame(
             "Birthday Offering",
             "Baptism & Wedding Offering",
             "Catholicate Fund Donation",
+            "Cathedral Fellowship",
             "Holy Week Donation",
             "Christmas Offering",
             "Diocesan Development Fund",
-            "Metropolitan Fund ",
+            "Metropolitan Fund",
             "Resisa Donation",
             "Self Denial Fund",
             "Marriage Assistance Fund",
@@ -75,6 +76,7 @@ accounts_lookup = pd.DataFrame(
             "3050",
             "3060",
             "3070",
+            "3260",
             "3080",
             "3090",
             "3100",
@@ -95,7 +97,7 @@ accounts_lookup = pd.DataFrame(
             "3250",
             "3310"
         ],
-        "Total": [0] * 26
+        "Total": [0] * 27
     }
 )
 
