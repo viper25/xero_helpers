@@ -141,3 +141,7 @@ my_secrets.py
 
 *.rc
 *.toml
+*. pickle
+*.pkl
+
+/.idea/
