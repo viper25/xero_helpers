@@ -22,14 +22,15 @@ from datetime import datetime
 import os
 import utils
 
-# Use this to ensure that ColorIt will be usable by certain command line interfaces
 init_colorit()
 
 # ===============================================================
 # VARIABLES & CONFIGURATION
 
-since_date = datetime.now().strftime("%Y-01-01")
-# since_date = '2021-01-01'
+# Get all data from this date on. This will reduce the amount of data to fetch from Xero.
+# Get from the beginning of the previous year
+XERO_GET_DATA_SINCE_DATE = datetime(datetime.now().year - 1, 1, 1).strftime("%Y-%m-%d")
+UPDATE_TX_FOR_YEAR = datetime.now().year
 
 bank_accounts = {"DBS": "1000", "NETS": "1001", "Cash": "1002"}
 receive_txns = []
@@ -66,7 +67,8 @@ accounts_lookup = pd.DataFrame(
             "Interest Income",
             "St. Mary's League Income",
             "Donations & Gifts",
-            "Kohne Sunday"
+            "Kohne Sunday",
+            "Snehasparsham & Vanitha Dinam"
         ],
         "AccountCode": [
             "3010",
@@ -95,9 +97,10 @@ accounts_lookup = pd.DataFrame(
             "3230",
             "3240",
             "3250",
-            "3310"
+            "3310",
+            "3320",
         ],
-        "Total": [0] * 27
+        "Total": [0] * 28
     }
 )
 
@@ -152,7 +155,7 @@ def get_member_ID(_str_name):
 
 
 # https://api-explorer.xero.com/accounting/banktransactions/getbanktransactions?query-where=BankAccount.Code%3D%3D%221000%22&query-page=1&header-if-modified-since=2021-04-20
-def get_member_txns(since_date):
+def get_member_txns():
     print(color(f"\nProcessing Member Transactions\n================", Colors.blue))
     for bank_account in bank_accounts.items():
         # Reset page counter for each account (DBS, NETS etc.)
@@ -164,7 +167,7 @@ def get_member_txns(since_date):
             page += 1
             # This endpoint does not return payments applied to invoices, expense claims or transfers between bank accounts.
             url = f'https://api.xero.com/api.xro/2.0/BankTransactions?where=BankAccount.Code=="{bank_account[1]}"&page={page}'
-            _header = {"If-Modified-Since": since_date}
+            _header = {"If-Modified-Since": XERO_GET_DATA_SINCE_DATE}
             txns = utils.xero_get(url, **_header)
             if len(txns["BankTransactions"]) == 0:
                 has_more_pages = False
@@ -180,8 +183,7 @@ def get_member_txns(since_date):
                         "BankAccount": _txn["BankAccount"]["Name"],
                         # "Year": _txn['DateString'].split('-')[0],
                         "Year": str(utils.parse_Xero_Date(_txn["Date"]).year),
-                        # Nested dict
-                        "Line Items": _txn["LineItems"],
+                        "Line Items": _txn["LineItems"],    # Nested dict
                         "Net Amount": _txn["Total"],
                         "Status": _txn["Status"],
                     }
@@ -191,13 +193,15 @@ def get_member_txns(since_date):
                         _txn["Type"] == "RECEIVE"
                         and _txn["Status"] == "AUTHORISED"
                         and _txn["IsReconciled"] == True
+                        # Get tx only for current year
+                        and utils.parse_Xero_Date(_txn["Date"]).year == UPDATE_TX_FOR_YEAR
                     )
                 ]
                 receive_txns.extend(_receive_txns)
     return receive_txns
 
 # https://api-explorer.xero.com/accounting/payments/getpayments?query-page=1&query-where=PaymentType%3D%22ACCRECPAYMENT%22&header-if-modified-since=2021-04-25
-def get_member_invoice_payments(since_date):
+def get_member_invoice_payments():
     print(color(f"\nProcessing Member Subscriptions\n================", Colors.blue))
     has_more_pages = True
     page = 0
@@ -207,7 +211,7 @@ def get_member_invoice_payments(since_date):
         page += 1
         # This endpoint does not return payments applied to invoices, expense claims or transfers between bank accounts.
         url = f'https://api.xero.com/api.xro/2.0/Payments?where=PaymentType="ACCRECPAYMENT"&page={page}'
-        _header = {"If-Modified-Since": since_date}
+        _header = {"If-Modified-Since": XERO_GET_DATA_SINCE_DATE}
         payments = utils.xero_get(url, **_header)
         if len(payments["Payments"]) == 0:
             has_more_pages = False
@@ -230,13 +234,14 @@ def get_member_invoice_payments(since_date):
                     # Only those tnxs that are payments to STOSC
                     _payments["Status"] == "AUTHORISED"
                     and _payments["IsReconciled"] == True
+                    and utils.parse_Xero_Date(_payments["Date"]).year == UPDATE_TX_FOR_YEAR
                 )
             ]
             received_payments.extend(_received_payments)
     return received_payments
 
-list_invoice_payments = get_member_invoice_payments(since_date)
-list_all_txns = get_member_txns(since_date)
+list_invoice_payments = get_member_invoice_payments()
+list_all_txns = get_member_txns()
 
 # Make DataFrames
 df_tnxs = pd.DataFrame(list_all_txns)
