@@ -10,7 +10,6 @@ Up to 100 bank transactions will be returned per call, with line items shown for
 when the page parameter is used e.g. page=1. The data is refreshed in DDB which is used by the Telegram bot 
 """
 
-
 # https://github.com/CodeForeverAndEver/ColorIt
 from colorit import *
 import pandas as pd
@@ -107,10 +106,12 @@ accounts_lookup = pd.DataFrame(
 df_members = pd.read_csv(f"csv{os.sep}xero_contacts.csv")
 
 write_to_csv = False
+
+
 # ===============================================================
 
 
-def upload_member_tx_to_ddb(records:dict):
+def upload_member_tx_to_ddb(records: dict):
     resource = boto3.resource(
         "dynamodb",
         aws_access_key_id=my_secrets.DDB_ACCESS_KEY_ID,
@@ -144,6 +145,7 @@ def cleanup_txns_df(_df_tnxs):
     _df_tnxs = _df_tnxs.drop(columns=["Line Items", "BankAccount", "Net Amount", "Status"])
 
     return _df_tnxs
+
 
 def get_member_ID(_str_name):
     # Get the member ID from the name
@@ -183,22 +185,23 @@ def get_member_txns():
                         "BankAccount": _txn["BankAccount"]["Name"],
                         # "Year": _txn['DateString'].split('-')[0],
                         "Year": str(utils.parse_Xero_Date(_txn["Date"]).year),
-                        "Line Items": _txn["LineItems"],    # Nested dict
+                        "Line Items": _txn["LineItems"],  # Nested dict
                         "Net Amount": _txn["Total"],
                         "Status": _txn["Status"],
                     }
                     for _txn in txns["BankTransactions"]
                     if (
-                        # Only those tnxs that are payments to STOSC
-                        _txn["Type"] == "RECEIVE"
-                        and _txn["Status"] == "AUTHORISED"
-                        and _txn["IsReconciled"] == True
-                        # Get tx only for current year
-                        and utils.parse_Xero_Date(_txn["Date"]).year == UPDATE_TX_FOR_YEAR
+                            # Only those tnxs that are payments to STOSC
+                            _txn["Type"] == "RECEIVE"
+                            and _txn["Status"] == "AUTHORISED"
+                            and _txn["IsReconciled"] == True
+                            # Get tx only for current year
+                            and utils.parse_Xero_Date(_txn["Date"]).year == UPDATE_TX_FOR_YEAR
                     )
                 ]
                 receive_txns.extend(_receive_txns)
     return receive_txns
+
 
 # https://api-explorer.xero.com/accounting/payments/getpayments?query-page=1&query-where=PaymentType%3D%22ACCRECPAYMENT%22&header-if-modified-since=2021-04-25
 def get_member_invoice_payments():
@@ -231,14 +234,15 @@ def get_member_invoice_payments():
                 }
                 for _payments in payments["Payments"]
                 if (
-                    # Only those tnxs that are payments to STOSC
-                    _payments["Status"] == "AUTHORISED"
-                    and _payments["IsReconciled"] == True
-                    and utils.parse_Xero_Date(_payments["Date"]).year == UPDATE_TX_FOR_YEAR
+                        # Only those tnxs that are payments to STOSC
+                        _payments["Status"] == "AUTHORISED"
+                        and _payments["IsReconciled"] == True
+                        and utils.parse_Xero_Date(_payments["Date"]).year == UPDATE_TX_FOR_YEAR
                 )
             ]
             received_payments.extend(_received_payments)
     return received_payments
+
 
 list_invoice_payments = get_member_invoice_payments()
 list_all_txns = get_member_txns()
@@ -270,7 +274,8 @@ FutureWarning: The default value of numeric_only in DataFrameGroupBy.sum is depr
 numeric_only will default to False. Either specify numeric_only or select only columns which should be valid for the function.
 '''
 
-df_grouped = df_merged.groupby(["ContactID", "ContactName", "MemberID", "AccountCode", "Account", "Year"]).sum().reset_index()
+df_grouped = df_merged.groupby(
+    ["ContactID", "ContactName", "MemberID", "AccountCode", "Account", "Year"]).sum().reset_index()
 print(color(df_grouped.sort_values(by=["ContactName"]).head(5), (200, 200, 200)))
 if write_to_csv:
     df_grouped.to_csv("csv\member_contributions_grouped.csv", index=True)
@@ -279,7 +284,8 @@ if write_to_csv:
 # Ref: https://pbpython.com/pandas-pivot-table-explained.html
 # Pivot to show all Accounts in cols
 # The values column automatically averages the data so should change to sum.
-df_pivoted = df_grouped.pivot_table(index=["ContactName","Year","MemberID"], columns="Account", values="LineAmount", aggfunc=np.sum, fill_value=0)
+df_pivoted = df_grouped.pivot_table(index=["ContactName", "Year", "MemberID"], columns="Account", values="LineAmount",
+                                    aggfunc=np.sum, fill_value=0)
 if write_to_csv:
     df_pivoted.to_csv("csv\member_contributions_pivoted.csv", index=True)
 
