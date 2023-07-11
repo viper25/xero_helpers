@@ -30,6 +30,7 @@ init_colorit()
 # Get from the beginning of the previous year
 XERO_GET_DATA_SINCE_DATE = datetime(datetime.now().year - 1, 1, 1).strftime("%Y-%m-%d")
 UPDATE_TX_FOR_YEAR = datetime.now().year
+WRITE_TO_CSV = False
 
 bank_accounts = {"DBS": "1000", "NETS": "1001", "Cash": "1002"}
 receive_txns = []
@@ -104,9 +105,6 @@ accounts_lookup = pd.DataFrame(
 )
 
 df_members = pd.read_csv(f"csv{os.sep}xero_contacts.csv")
-
-write_to_csv = False
-
 
 # ===============================================================
 
@@ -264,7 +262,7 @@ s = accounts_lookup.set_index("AccountCode")["label"]
 df_merged["Account"] = df_merged["AccountCode"].map(s)
 
 # Save to CSV
-if write_to_csv:
+if WRITE_TO_CSV:
     df_merged.to_csv("csv\member_contributions.csv", index=False)
 
 # Group by Contacts to show all payments from a member
@@ -277,7 +275,7 @@ numeric_only will default to False. Either specify numeric_only or select only c
 df_grouped = df_merged.groupby(
     ["ContactID", "ContactName", "MemberID", "AccountCode", "Account", "Year"]).sum().reset_index()
 print(color(df_grouped.sort_values(by=["ContactName"]).head(5), (200, 200, 200)))
-if write_to_csv:
+if WRITE_TO_CSV:
     df_grouped.to_csv("csv\member_contributions_grouped.csv", index=True)
 # df_grouped.pivot_table(index=["ContactName","Account"]).to_csv('member_contributions_grouped-1.csv',index=True)
 
@@ -286,7 +284,7 @@ if write_to_csv:
 # The values column automatically averages the data so should change to sum.
 df_pivoted = df_grouped.pivot_table(index=["ContactName", "Year", "MemberID"], columns="Account", values="LineAmount",
                                     aggfunc=np.sum, fill_value=0)
-if write_to_csv:
+if WRITE_TO_CSV:
     df_pivoted.to_csv("csv\member_contributions_pivoted.csv", index=True)
 
 list_of_records = df_grouped.to_dict(orient='records')
