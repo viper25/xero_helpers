@@ -58,18 +58,26 @@ def __db_executeQuery(sql, db, prepared=False, *args):
 # ----------------------------------------------------------------------------------------------------------------------
 def update_gb_eligibility(member, current_eligibility_status, members_status_change_eligible, members_status_change_ineligible):
     sql_check = "SELECT fc.c5, fc.c7 FROM family_custom fc where fc.c7 = %s"
-    crm_is_eligible = __db_executeQuery(sql_check, Databases.CRM, True, member)[0][0].lower() == 'true'
-    if crm_is_eligible == current_eligibility_status:
-        return
-    else:
-        sql = "update family_custom fc set fc.c5 = %s where fc.c7 = %s"
-        print(color(f"\t   ✏️ Changing {member} eligibility from {crm_is_eligible} to {current_eligibility_status}",Colors.orange))
-        # Add member to a set of members to be updated
-        if current_eligibility_status:
-            members_status_change_eligible.add(member)
+    _x = __db_executeQuery(sql_check, Databases.CRM, True, member)
+    if _x:
+        if _x[0][0]:
+            crm_is_eligible = _x[0][0].lower() == 'true'
         else:
-            members_status_change_ineligible.add(member)
-        _result = __db_executeQuery(sql, Databases.CRM, True, str(current_eligibility_status), member)
+            crm_is_eligible = False
+        if crm_is_eligible == current_eligibility_status:
+            return
+        else:
+            sql = "update family_custom fc set fc.c5 = %s where fc.c7 = %s"
+            print(color(f"\t   ✏️ Changing {member} eligibility from {crm_is_eligible} to {current_eligibility_status}",Colors.orange))
+            # Add member to a set of members to be updated
+            if current_eligibility_status:
+                members_status_change_eligible.add(member)
+            else:
+                members_status_change_ineligible.add(member)
+            _result = __db_executeQuery(sql, Databases.CRM, True, str(current_eligibility_status), member)
+            return None
+    else:
+        print(color(f"\t   ⚠️ {member} not found in CRM",Colors.red))
         return None
 
 def get_address(member_code: str):
