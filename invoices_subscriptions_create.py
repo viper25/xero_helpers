@@ -1,5 +1,5 @@
 """
-CREATE NEW SUBSCRIPTION INVOICES - based on prevoius years invoice amount
+CREATE NEW SUBSCRIPTION INVOICES - based on previous years invoice amount
 ▶ Input file is a text file of Member Codes. It's good (not mandatory that the list be sorted) Format:
     R023
     Z001

@@ -38,6 +38,8 @@ received_payments = []
 tracking_categories = {
     "'ce1b1125-b513-47de-9649-dd650f2b221e'": 'Parsonage 2022'
 }
+
+# For any update here, also update the STOSCBot so it displays properly.
 accounts_lookup = pd.DataFrame(
     {
         "label": [
