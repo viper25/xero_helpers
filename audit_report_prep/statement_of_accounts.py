@@ -27,12 +27,12 @@ def get_df_from_ddb(table_name, file_name):
         response = table.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
         data.extend(response['Items'])
 
-    df = pd.DataFrame(data)
+    _df = pd.DataFrame(data)
 
     # Filter for current year
     # create a filter
-    year_mask = df['AccountCode'].str.startswith(YEAR_TO_GENERATE_REPORT_FOR)
-    filtered_df = df[year_mask]
+    year_mask = _df['AccountCode'].str.startswith(YEAR_TO_GENERATE_REPORT_FOR)
+    filtered_df = _df[year_mask]
 
     pivot_df = filtered_df.pivot_table(index=['ContactName', 'ContactID'], columns='Account',
                                        values='LineAmount').reset_index()
