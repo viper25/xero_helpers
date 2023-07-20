@@ -5,13 +5,16 @@ An easy alternative is https://github.com/XeroAPI/xoauth/releases/download/v1.1.
 '''
 import requests
 import json
-import sys
+import tomllib
 import base64
 import hmac
 import hashlib
 
+with open("config.toml", "rb") as f:
+    config = tomllib.load(f)
 
-CLIENT_ID = "XXX"
+
+CLIENT_ID = config["xero"]["XERO_CLIENT_ID"]
 REDIRECT_URI = "https://stosc.com/xero"
 
 
