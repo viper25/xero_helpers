@@ -17,15 +17,17 @@ Use xoauth.exe to get an access token, plug that into xero_first_time.py and get
 Manually check for pro-rated invoices and set to the proper Value.
 For FY22: M053, L008, N008, B025, M054 was pro-rated. Check CRM https://crm.stosc.com/churchcrm/v2/family/710
 """
-
+import tomllib
 import utils
 # https://github.com/CodeForeverAndEver/ColorIt
 from colorit import *
 
 
+with open("config.toml", "rb") as f:
+    config = tomllib.load(f)
+
 # Ensure the CSV is sorted by member name
-# csv_file = "csv\xero_contacts.csv"
-csv_file = "csv\contacts.txt"
+csv_file = "csv\\xero_contacts.csv"
 
 INVOICE_YEAR = "2023"
 INVOICE_DESC = f"Subscription {INVOICE_YEAR}"
@@ -36,7 +38,7 @@ INVOICE_DUE_DATE = f"{INVOICE_YEAR}-12-31"
 SEARCH_STRING_FOR_PREVIOUS_SUBSCRIPTION = "INV-22"
 # Branding Theme: "STOSC Custom"
 # Get this from https://api-explorer.xero.com/accounting/brandingthemes/getbrandingthemes
-BRANDING_THEME = "816df8f1-4c58-4696-bb57-a5f56d6288f4"
+BRANDING_THEME = config['xero']['BRANDING_THEME']
 # Use this to ensure that ColorIt will be usable by certain command line interfaces
 init_colorit()
 
@@ -54,7 +56,7 @@ def create_xero_invoice(inv):
 new_invoice_data = {}
 
 # Just a failsafe check
-# if my_secrets.xero_tenant_ID == "xxx":
+# if my_secrets.xero_tenant_ID == config['xero']['XERO_TENANT_ID']:
 #     print(color(f"CAREFUL!: This is STOSC PRODUCTION ACCOUNT. Are you sure?", Colors.red))
 #     print(color(f"Did you set NEXT Invoice Numbers? to INV-23-001? ", Colors.red))
 #     sys.exit(0)

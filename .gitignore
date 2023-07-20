@@ -135,6 +135,7 @@ dmypy.json
 
 # Tokens & Secrets
 my_secrets.py
+contacts.txt
 
 # VS Code setings
 .vscode/
