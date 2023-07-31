@@ -240,7 +240,8 @@ def get_member_invoice_payments():
                         and utils.parse_Xero_Date(_payments["Date"]).year == UPDATE_TX_FOR_YEAR
                 )
             ]
-            received_payments.extend(_received_payments)
+            if _received_payments:
+                received_payments.extend(_received_payments)
     return received_payments
 
 
