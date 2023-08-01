@@ -1,35 +1,42 @@
 """
-🔹To get a matrix of all the members contributions for the year (Excel output) 
+🔹To get a matrix of all the members contributions for the year (Excel output)
 🔹Scheduled job to update member payments in DDB
 🔹Scheduled job to add accounts of interest that needs to be monitored for totals in DDB
 
-This does NOT include 
+This does NOT include
 Invoice payments (i.e. member subscription payments)
 https://developer.xero.com/documentation/api/banktransactions#GET
-Up to 100 bank transactions will be returned per call, with line items shown for each transaction, 
-when the page parameter is used e.g. page=1. The data is refreshed in DDB which is used by the Telegram bot 
+Up to 100 bank transactions will be returned per call, with line items shown for each transaction,
+when the page parameter is used e.g. page=1. The data is refreshed in DDB which is used by the Telegram bot
 """
-
-# https://github.com/CodeForeverAndEver/ColorIt
 from colorit import *
 import pandas as pd
 import numpy as np
 import boto3
 from decimal import Decimal
-import my_secrets
 from datetime import datetime
-import os
 import utils
+from sqlalchemy import create_engine, text
+import tomllib
+from urllib.parse import quote
 
 init_colorit()
 
 # ===============================================================
 # VARIABLES & CONFIGURATION
 
+with open("jobs_config.toml", "rb") as f:
+    config = tomllib.load(f)
+
+USER = config['database']['USER']
+PASSWORD = quote(config['database']['STOSC_DB_WRITE_PWD'])
+HOST = config['database']['STOSC_DB_HOST']
+PORT = 3306
+
+UPDATE_TX_FOR_YEAR = datetime.now().year
 # Get all data from this date on. This will reduce the amount of data to fetch from Xero.
 # Get from the beginning of the previous year
-XERO_GET_DATA_SINCE_DATE = datetime(datetime.now().year - 1, 1, 1).strftime("%Y-%m-%d")
-UPDATE_TX_FOR_YEAR = datetime.now().year
+XERO_GET_DATA_SINCE_DATE = datetime(UPDATE_TX_FOR_YEAR - 1, 1, 1).strftime("%Y-%m-%d")
 WRITE_TO_CSV = False
 
 bank_accounts = {"DBS": "1000", "NETS": "1001", "Cash": "1002"}
@@ -108,14 +115,15 @@ accounts_lookup = pd.DataFrame(
 
 df_members = pd.read_csv(f"csv{os.sep}xero_contacts.csv")
 
+
 # ===============================================================
 
 
 def upload_member_tx_to_ddb(records: dict):
     resource = boto3.resource(
         "dynamodb",
-        aws_access_key_id=my_secrets.DDB_ACCESS_KEY_ID,
-        aws_secret_access_key=my_secrets.DDB_SECRET_ACCESS_KEY,
+        aws_access_key_id=config['ddb_srvc_stosc_members']['STOSC_DDB_ACCESS_KEY_ID'],
+        aws_secret_access_key=config['ddb_srvc_stosc_members']['STOSC_DDB_SECRET_ACCESS_KEY'],
         region_name="ap-southeast-1",
     )
     table = resource.Table("stosc_xero_member_payments")
@@ -147,12 +155,12 @@ def cleanup_txns_df(_df_tnxs):
     return _df_tnxs
 
 
-def get_member_ID(_str_name):
+def get_member_ID(_contact_ID):
     # Get the member ID from the name
-    if len(df_members.loc[df_members['ContactID'] == _str_name]) == 0:
+    if len(df_members.loc[df_members['ContactID'] == _contact_ID]) == 0:
         _member_code = 'NA'
     else:
-        _member_code = df_members.loc[df_members['ContactID'] == _str_name].iloc[0][0]
+        _member_code = df_members.loc[df_members['ContactID'] == _contact_ID].iloc[0][0]
     return _member_code
 
 
@@ -184,6 +192,7 @@ def get_member_txns():
                         "MemberID": get_member_ID(_txn["Contact"]["ContactID"]),
                         "BankAccount": _txn["BankAccount"]["Name"],
                         # "Year": _txn['DateString'].split('-')[0],
+                        "Date": str(utils.parse_Xero_Date(_txn["Date"]).date()),
                         "Year": str(utils.parse_Xero_Date(_txn["Date"]).year),
                         "Line Items": _txn["LineItems"],  # Nested dict
                         "Net Amount": _txn["Total"],
@@ -229,6 +238,7 @@ def get_member_invoice_payments():
                     # We assume any invoices not starting with INV is issued for harvest Festival
                     "AccountCode": "3010" if _payments["Invoice"]["InvoiceNumber"].startswith("INV") else "3200",
                     # "Year": _txn['DateString'].split('-')[0],
+                    "Date": str(utils.parse_Xero_Date(_payments["Date"]).date()),
                     "Year": str(utils.parse_Xero_Date(_payments["Date"]).year),
                     "LineAmount": _payments["Amount"],
                 }
@@ -245,6 +255,97 @@ def get_member_invoice_payments():
     return received_payments
 
 
+# Insert dataframe to a Postgres table
+def insert_df_to_crm_db(df):
+    engine = create_engine(f'mysql+pymysql://{USER}:{PASSWORD}@{HOST}/stosc_churchcrm')
+
+    # Delete existing records
+    print(color(f"\nDeleting existing records in CRM DB\n================", Colors.white))
+    # Delete current year's records
+    sql = f"DELETE FROM pledge_plg where plg_FYID = {datetime.now().year - 1996}"
+    with engine.begin() as conn:
+        conn.execute(text(sql))
+
+        # Insert to Postgres
+    print(color(f"\nInserting to CRM DB\n================", Colors.white))
+
+    df.to_sql('pledge_plg', engine, if_exists='append', index=False, method='multi')
+    engine.dispose()
+
+
+def align_columns_to_pledge_plg_table(df):
+    engine = create_engine(f'mysql+pymysql://{USER}:{PASSWORD}@{HOST}/stosc_churchcrm')
+
+    def populate_family_ids():
+        sql = "SELECT fam_ID, LEFT(RIGHT(fam_Name,5),4) as memberCode, fam_Name FROM family_fam where fam_DateDeactivated is NULL"
+        x = pd.read_sql(sql, engine)
+        return x
+
+    def populate_fund_ids():
+        sql = "SELECT fun_ID, fun_Name FROM donationfund_fun where fun_Active = TRUE"
+        x = pd.read_sql(sql, engine)
+        return x
+
+    crm_family_ids = populate_family_ids()
+    crm_fund_ids = populate_fund_ids()
+
+    crm_pledge_plg_db_columns = ['plg_FamID', 'plg_FYID', 'plg_date', 'plg_amount', 'plg_schedule', 'plg_method',
+                                 'plg_comment', 'plg_DateLastEdited', 'plg_EditedBy', 'plg_PledgeOrPayment',
+                                 'plg_fundID', 'plg_depID', 'plg_CheckNo', 'plg_Problem', 'plg_scanString',
+                                 'plg_aut_ID', 'plg_aut_Cleared', 'plg_aut_ResultID', 'plg_NonDeductible',
+                                 'plg_GroupKey']
+
+    # Add db_columns columns to dataframe
+    df = df.reindex(columns=[*df.columns.tolist(), *crm_pledge_plg_db_columns], fill_value="")
+
+    # Get the family ID of each member by looking up the family name in the DF_FAMILIES dataframe
+    def get_crm_family_ID(member_ID):
+        # Return the family ID of the member and '0' if not found
+        if member_ID not in crm_family_ids['memberCode'].values:
+            return 0
+        return crm_family_ids.loc[crm_family_ids['memberCode'] == member_ID, 'fam_ID'].values[0]
+
+    def get_crm_fund_ID(fund_name):
+        # Return the fund ID and '0' if not found
+        if fund_name not in crm_fund_ids['fun_Name'].values:
+            return 0
+        return crm_fund_ids.loc[crm_fund_ids['fun_Name'] == fund_name, 'fun_ID'].values[0]
+
+    # Set the values of the new columns of table pledge_plg
+    df["plg_FamID"] = df["MemberID"].apply(get_crm_family_ID)
+    # CRM DB stores year as an ID like this 🤷🏽‍♂️
+    df["plg_FYID"] = pd.to_datetime(df['Date']).dt.year - 1996
+    df["plg_date"] = df["Date"]
+    df["plg_amount"] = df["LineAmount"]
+    df["plg_schedule"] = "Once"
+    df["plg_method"] = "CASH"
+    df["plg_comment"] = df["Account"]
+    df["plg_DateLastEdited"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    df["plg_EditedBy"] = 1
+    df["plg_PledgeOrPayment"] = "Payment"
+    df["plg_fundID"] = df["Account"].apply(get_crm_fund_ID)
+    df["plg_depID"] = 0
+    df["plg_CheckNo"] = None
+    df["plg_Problem"] = None
+    df["plg_scanString"] = None
+    df["plg_aut_ID"] = 0
+    df["plg_aut_Cleared"] = 0
+    df["plg_aut_ResultID"] = 0
+    df["plg_NonDeductible"] = 0
+    # Concatenate plg_FamID, plg_fundID,plg_date  to create GroupKey
+    df["plg_GroupKey"] = "cash|0|" + df["plg_FamID"].astype(str) + "|" + df["plg_fundID"].astype(str) + "|" + df["plg_date"]
+
+    # Replace all None with NaN
+    df = df.fillna(value=np.nan)
+
+    # Remove columns not in db_columns
+    df = df[crm_pledge_plg_db_columns]
+    engine.dispose()
+    return df
+
+
+# ==================== MAIN ====================
+
 list_invoice_payments = get_member_invoice_payments()
 list_all_txns = get_member_txns()
 
@@ -254,15 +355,16 @@ df_payments = pd.DataFrame(list_invoice_payments)
 
 df_tnxs = cleanup_txns_df(df_tnxs)
 
-# Find a contact
-# df_tnxs.loc[df_tnxs['ContactName'] == "Vibin Joseph Kuriakose"]
-
 # Merge Subscription Payments and Transaction Data Frames
 df_merged = pd.concat([df_payments, df_tnxs])
 
 # Lookup and Account code and Add Account Desc
 s = accounts_lookup.set_index("AccountCode")["label"]
 df_merged["Account"] = df_merged["AccountCode"].map(s)
+
+# Update CRM DB Pledge tables
+df_pledge_plg = align_columns_to_pledge_plg_table(df_merged)
+insert_df_to_crm_db(df_pledge_plg)
 
 # Save to CSV
 if WRITE_TO_CSV:
