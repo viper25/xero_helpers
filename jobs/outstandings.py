@@ -5,9 +5,8 @@
 as of a certain date
 """
 
-import utils
+from utils import utils
 from colorama import Fore, init
-import tomllib
 import pandas as pd
 
 init(autoreset=True)
@@ -83,19 +82,32 @@ while has_more_pages:
                 temp_df = pd.DataFrame([{'Inv': x, 'Total': invoice['Total'], 'Due': invoice['AmountDue']}])
                 df = pd.concat([df,temp_df], ignore_index=True)            
             else:
-                raise 
+                raise ValueError(f"Unknown Invoice Number: {invoice['InvoiceNumber']}")
 
 df_grouped = df.groupby('Inv').sum()
 # df_grouped['%'] = df_grouped.apply(lambda x: x['Due']/x['Total'] * 100 if x['Total']!=0 else 0, axis=1)
 # df_grouped['%'] = df_grouped['%'].round(2)
 # df_grouped['%'] = df_grouped['%'].apply(lambda x: '{:.1f}%'.format(x))
+
+# Remove rows that have the "Due" column = 0
+df_grouped = df_grouped[df_grouped['Due']!=0]
+
 df_grouped['Total'] = df_grouped['Total'].apply(lambda x: '$ {:,.0f}'.format(x))
 df_grouped['Due'] = df_grouped['Due'].apply(lambda x: '$ {:,.0f}'.format(x))
 print(f"\n{Fore.WHITE}{df_grouped.to_string()}\n")
 
+# Reset the index
+df_reset = df_grouped.reset_index()
+# Extract the year from the index column
+df_reset['year'] = df_reset.iloc[:, 0].str.extract('(\d+)').astype(int)
+# Sort the dataframe based on the extracted year
+df_sorted = df_reset.sort_values(by='year')
+# Set the index back to the original column and drop the year column
+df_sorted = df_sorted.set_index(df_sorted.columns[0]).drop('year', axis=1)
+
 import pickle
 filehandler = open(b"outstandings.pickle","wb")
-pickle.dump(df_grouped,filehandler)
+pickle.dump(df_sorted,filehandler)
 filehandler.close()
 
 
