@@ -184,32 +184,34 @@ def get_member_txns():
                 has_more_pages = False
             else:
                 print(color(f"Processing {bank_account[0]}. Page {page}", Colors.blue))
-                # Keep only "Type":"RECEIVE" & construct a dict via Python List Comprehension
-                _receive_txns = [
-                    {
-                        # Build the output item
-                        "ContactID": _txn["Contact"]["ContactID"],
-                        "ContactName": _txn["Contact"]["Name"],
-                        "MemberID": get_member_ID(_txn["Contact"]["ContactID"]),
-                        "BankAccount": _txn["BankAccount"]["Name"],
-                        # "Year": _txn['DateString'].split('-')[0],
-                        "Date": str(utils.parse_Xero_Date(_txn["Date"]).date()),
-                        "Year": str(utils.parse_Xero_Date(_txn["Date"]).year),
-                        "Line Items": _txn["LineItems"],  # Nested dict
-                        "Net Amount": _txn["Total"],
-                        "Status": _txn["Status"],
-                    }
-                    for _txn in txns["BankTransactions"]
+                # Keep only "Type":"RECEIVE"
+                for _txn in txns["BankTransactions"]:
+                    _receive_txns = None
                     if (
-                        # Only those tnxs that are payments to STOSC
+                            # Only those tnxs that are payments to STOSC
                             _txn["Type"] == "RECEIVE"
                             and _txn["Status"] == "AUTHORISED"
                             and _txn["IsReconciled"] == True
                             # Get tx only for current year
                             and utils.parse_Xero_Date(_txn["Date"]).year == UPDATE_TX_FOR_YEAR
-                    )
-                ]
-                receive_txns.extend(_receive_txns)
+                    ):
+                        _receive_txns = [
+                            {
+                                # Build the output item
+                                "ContactID": _txn["Contact"]["ContactID"],
+                                "ContactName": _txn["Contact"]["Name"],
+                                "MemberID": get_member_ID(_txn["Contact"]["ContactID"]),
+                                "BankAccount": _txn["BankAccount"]["Name"],
+                                # "Year": _txn['DateString'].split('-')[0],
+                                "Date": str(utils.parse_Xero_Date(_txn["Date"]).date()),
+                                "Year": str(utils.parse_Xero_Date(_txn["Date"]).year),
+                                "Line Items": _txn["LineItems"],  # Nested dict
+                                "Net Amount": _txn["Total"],
+                                "Status": _txn["Status"],
+                            }
+                        ]
+                    if _receive_txns:
+                        receive_txns.extend(_receive_txns)
     return receive_txns
 
 
@@ -229,31 +231,32 @@ def get_member_invoice_payments():
         if len(payments["Payments"]) == 0:
             has_more_pages = False
         else:
-            # Keep only "Type":"RECEIVE" & construct a dict via Python List Comprehension
-            _received_payments = [
-                {
-                    # Build the output item
-                    "ContactID": _payments["Invoice"]["Contact"]["ContactID"],
-                    "ContactName": _payments["Invoice"]["Contact"]["Name"],
-                    "MemberID": get_member_ID(_payments["Invoice"]["Contact"]["ContactID"]),
-                    # We assume any invoices not starting with INV is issued for harvest Festival
-                    "AccountCode": "3010" if _payments["Invoice"]["InvoiceNumber"].startswith(
-                        "INV") else "3200",
-                    # "Year": _txn['DateString'].split('-')[0],
-                    "Date": str(utils.parse_Xero_Date(_payments["Date"]).date()),
-                    "Year": str(utils.parse_Xero_Date(_payments["Date"]).year),
-                    "LineAmount": _payments["Amount"],
-                }
-                for _payments in payments["Payments"]
+            # Keep only "Type":"RECEIVE"
+            for _payments in payments["Payments"]:
+                _received_payments = None
                 if (
-                    # Only those tnxs that are payments to STOSC
+                        # Only those tnxs that are payments to STOSC
                         _payments["Status"] == "AUTHORISED"
                         and _payments["IsReconciled"] == True
                         and utils.parse_Xero_Date(_payments["Date"]).year == UPDATE_TX_FOR_YEAR
-                )
-            ]
-            if _received_payments:
-                received_payments.extend(_received_payments)
+                ):
+                    _received_payments = [
+                        {
+                            # Build the output item
+                            "ContactID": _payments["Invoice"]["Contact"]["ContactID"],
+                            "ContactName": _payments["Invoice"]["Contact"]["Name"],
+                            "MemberID": get_member_ID(_payments["Invoice"]["Contact"]["ContactID"]),
+                            # We assume any invoices not starting with INV is issued for harvest Festival
+                            "AccountCode": "3010" if _payments["Invoice"]["InvoiceNumber"].startswith(
+                                "INV") else "3200",
+                            # "Year": _txn['DateString'].split('-')[0],
+                            "Date": str(utils.parse_Xero_Date(_payments["Date"]).date()),
+                            "Year": str(utils.parse_Xero_Date(_payments["Date"]).year),
+                            "LineAmount": _payments["Amount"],
+                        }
+                    ]
+                if _received_payments:
+                    received_payments.extend(_received_payments)
     return received_payments
 
 
@@ -368,10 +371,6 @@ df_merged["Account"] = df_merged["AccountCode"].map(s)
 # Update CRM DB Pledge tables
 df_pledge_plg = align_columns_to_pledge_plg_table(df_merged)
 insert_df_to_crm_db(df_pledge_plg)
-
-# Save to CSV
-if WRITE_TO_CSV:
-    df_merged.to_csv("csv\member_contributions.csv", index=False)
 
 # Group by Contacts to show all payments from a member
 '''
