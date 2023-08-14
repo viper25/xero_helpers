@@ -9,16 +9,18 @@ https://developer.xero.com/documentation/api/banktransactions#GET
 Up to 100 bank transactions will be returned per call, with line items shown for each transaction,
 when the page parameter is used e.g. page=1. The data is refreshed in DDB which is used by the Telegram bot
 """
-from colorit import *
-import pandas as pd
-import numpy as np
-import boto3
-from decimal import Decimal
-from datetime import datetime
-import utils
-from sqlalchemy import create_engine, text
 import tomllib
+from datetime import datetime
+from decimal import Decimal
 from urllib.parse import quote
+
+import boto3
+import numpy as np
+import pandas as pd
+from colorit import *
+from sqlalchemy import create_engine, text
+
+import utils
 
 init_colorit()
 
@@ -116,8 +118,7 @@ accounts_lookup = pd.DataFrame(
 df_members = pd.read_csv(f"csv{os.sep}xero_contacts.csv")
 
 
-# ===============================================================
-
+# =================================================================
 
 def upload_member_tx_to_ddb(records: dict):
     resource = boto3.resource(
@@ -200,7 +201,7 @@ def get_member_txns():
                     }
                     for _txn in txns["BankTransactions"]
                     if (
-                            # Only those tnxs that are payments to STOSC
+                        # Only those tnxs that are payments to STOSC
                             _txn["Type"] == "RECEIVE"
                             and _txn["Status"] == "AUTHORISED"
                             and _txn["IsReconciled"] == True
@@ -236,7 +237,8 @@ def get_member_invoice_payments():
                     "ContactName": _payments["Invoice"]["Contact"]["Name"],
                     "MemberID": get_member_ID(_payments["Invoice"]["Contact"]["ContactID"]),
                     # We assume any invoices not starting with INV is issued for harvest Festival
-                    "AccountCode": "3010" if _payments["Invoice"]["InvoiceNumber"].startswith("INV") else "3200",
+                    "AccountCode": "3010" if _payments["Invoice"]["InvoiceNumber"].startswith(
+                        "INV") else "3200",
                     # "Year": _txn['DateString'].split('-')[0],
                     "Date": str(utils.parse_Xero_Date(_payments["Date"]).date()),
                     "Year": str(utils.parse_Xero_Date(_payments["Date"]).year),
@@ -244,7 +246,7 @@ def get_member_invoice_payments():
                 }
                 for _payments in payments["Payments"]
                 if (
-                        # Only those tnxs that are payments to STOSC
+                    # Only those tnxs that are payments to STOSC
                         _payments["Status"] == "AUTHORISED"
                         and _payments["IsReconciled"] == True
                         and utils.parse_Xero_Date(_payments["Date"]).year == UPDATE_TX_FOR_YEAR
@@ -333,7 +335,8 @@ def align_columns_to_pledge_plg_table(df):
     df["plg_aut_ResultID"] = 0
     df["plg_NonDeductible"] = 0
     # Concatenate plg_FamID, plg_fundID,plg_date  to create GroupKey
-    df["plg_GroupKey"] = "cash|0|" + df["plg_FamID"].astype(str) + "|" + df["plg_fundID"].astype(str) + "|" + df["plg_date"]
+    df["plg_GroupKey"] = "cash|0|" + df["plg_FamID"].astype(str) + "|" + df["plg_fundID"].astype(str) + "|" + df[
+        "plg_date"]
 
     # Replace all None with NaN
     df = df.fillna(value=np.nan)
@@ -373,7 +376,7 @@ if WRITE_TO_CSV:
 # Group by Contacts to show all payments from a member
 '''
 TODO:
-FutureWarning: The default value of numeric_only in DataFrameGroupBy.sum is deprecated. In a future version, 
+FutureWarning: The default value of numeric_only in DataFrameGroupBy.sum is deprecated. In a future version,
 numeric_only will default to False. Either specify numeric_only or select only columns which should be valid for the function.
 '''
 
