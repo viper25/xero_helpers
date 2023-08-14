@@ -2,6 +2,9 @@
 Download member contributions from DynamoDB, and pivot to create the Statement of Accounts for
 preparing Audit report. Note this has only active members, so if there are any that have left mid-year
 manually adjust those lookups.
+
+Make sure xero_contacts.csv is updated first.
+TODO: Generate this on the fly from Xero API
 """
 import boto3
 import pandas as pd
