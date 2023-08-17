@@ -8,6 +8,9 @@ Invoice payments (i.e. member subscription payments)
 https://developer.xero.com/documentation/api/banktransactions#GET
 Up to 100 bank transactions will be returned per call, with line items shown for each transaction,
 when the page parameter is used e.g. page=1. The data is refreshed in DDB which is used by the Telegram bot
+
+TODO: When paid using suspense accounts, we cannot rely on the IsReconciled flag since there is nothing to
+reconcile to. Therefore handle this separately.
 """
 import tomllib
 from datetime import datetime
