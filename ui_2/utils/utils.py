@@ -173,6 +173,16 @@ def get_last_subscription_amount_by_contact_id(contact_id, member_code):
         return None
     return subscription_amt
 
+def get_chart_of_accounts(status: str='ACTIVE', class_type: str=None):
+    # https://api.xero.com/api.xro/2.0/Accounts?where=Status="ACTIVE"&&Class="REVENUE"
+    # doesn't seem to filter at server side.
+    url = f'https://api.xero.com/api.xro/2.0/Accounts'
+    accounts = xero_get(url)['Accounts']
+    if status:
+        accounts = [x for x in accounts if x['Status'] == status]
+    if class_type:
+        accounts = [x for x in accounts if x['Class'] == class_type]
+    return accounts
 
 # -----------------------------------------------------------------------------------
 #         

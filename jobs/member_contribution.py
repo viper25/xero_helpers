@@ -51,74 +51,24 @@ tracking_categories = {
     "'ce1b1125-b513-47de-9649-dd650f2b221e'": 'Parsonage 2022'
 }
 
-# For any update here, also update the STOSCBot so it displays properly.
-accounts_lookup = pd.DataFrame(
-    {
-        "label": [
-            "Member Subscription",
-            "Offertory",
-            "Holy Qurbana",
-            "Auction Sales",
-            "Birthday Offering",
-            "Baptism & Wedding Offering",
-            "Catholicate Fund Donation",
-            "Cathedral Fellowship",
-            "Holy Week Donation",
-            "Christmas Offering",
-            "Diocesan Development Fund",
-            "Metropolitan Fund",
-            "Resisa Donation",
-            "Self Denial Fund",
-            "Marriage Assistance Fund",
-            "Seminary Fund",
-            "Mission Fund",
-            "Sunday School",
-            "Youth Fellowship",
-            "Tithe",
-            "Thanksgiving Auction",
-            "Thanksgiving Donation",
-            "Other Revenue",
-            "Interest Income",
-            "St. Mary's League Income",
-            "Donations & Gifts",
-            "Kohne Sunday",
-            "Snehasparsham & Vanitha Dinam"
-        ],
-        "AccountCode": [
-            "3010",
-            "3020",
-            "3030",
-            "3040",
-            "3050",
-            "3060",
-            "3070",
-            "3260",
-            "3080",
-            "3090",
-            "3100",
-            "3110",
-            "3120",
-            "3130",
-            "3140",
-            "3150",
-            "3160",
-            "3170",
-            "3180",
-            "3190",
-            "3200",
-            "3210",
-            "3220",
-            "3230",
-            "3240",
-            "3250",
-            "3310",
-            "3320",
-        ],
-        "Total": [0] * 28
-    }
-)
 
-df_members = pd.read_csv(f"csv{os.sep}xero_contacts.csv")
+def get_chart_of_accounts():
+    _out = {
+        "label": [],
+        "AccountCode": []
+    }
+
+    accounts = utils.get_chart_of_accounts(status="ACTIVE", class_type="REVENUE")
+    for item in accounts:
+        _out["label"].append(item["Name"])
+        _out["AccountCode"].append(item["Code"])
+
+    _out["Total"] = [0] * len(_out['label'])
+
+    return _out
+
+
+df_members = pd.read_csv(f"..\csv{os.sep}xero_contacts.csv")
 
 
 # =================================================================
@@ -368,6 +318,7 @@ df_tnxs = cleanup_txns_df(df_tnxs)
 df_merged = pd.concat([df_payments, df_tnxs])
 
 # Lookup and Account code and Add Account Desc
+accounts_lookup = pd.DataFrame(get_chart_of_accounts())
 s = accounts_lookup.set_index("AccountCode")["label"]
 df_merged["Account"] = df_merged["AccountCode"].map(s)
 
