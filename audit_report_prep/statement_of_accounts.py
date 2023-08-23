@@ -3,18 +3,22 @@ Download member contributions from DynamoDB, and pivot to create the Statement o
 preparing Audit report. Note this has only active members, so if there are any that have left mid-year
 manually adjust those lookups.
 
+ENSURE THAT DDB table stosc_xero_member_payments is updated and latest!
+
 Make sure xero_contacts.csv is updated first.
-TODO: Generate this on the fly from Xero API
+TODO: Generate this on the fly from Xero API. Also First Evangelic church is  
+
 """
 import boto3
 import pandas as pd
+
 import my_secrets
 
-TABLE_NAME = "stosc_xero_member_payments"
+TABLE_NAME_MEMBER_PAYMENTS = "stosc_xero_member_payments"
 YEAR_TO_GENERATE_REPORT_FOR = '2022'
 
 
-def get_df_from_ddb(table_name, file_name):
+def get_df_from_ddb(table_name):
     session = boto3.Session(
         aws_access_key_id=my_secrets.DDB_ACCESS_KEY_ID,
         aws_secret_access_key=my_secrets.DDB_SECRET_ACCESS_KEY,
@@ -46,9 +50,6 @@ def get_df_from_ddb(table_name, file_name):
     return pivot_df
 
 
-df = get_df_from_ddb(TABLE_NAME, TABLE_NAME)
-
-
 def lookup_member_code_from_contact_id(_df):
     # Get lookup_df from csv file which is one folder level up
     lookup_df = pd.read_csv('../csv/xero_contacts.csv')
@@ -75,8 +76,20 @@ def lookup_member_code_from_contact_id(_df):
     return merged_df
 
 
-df = lookup_member_code_from_contact_id(df)
+# Main program
+if __name__ == '__main__':
 
-filename = f"{TABLE_NAME}_{YEAR_TO_GENERATE_REPORT_FOR}.csv"
-df.to_csv(filename, index=False)
-print(f"Downloaded {len(df)} rows to {filename} for {YEAR_TO_GENERATE_REPORT_FOR}")
+    # Inform user to ensure that xero_contacts.csv is updated first
+    print("Is xero_contacts.csv updated? If not, please update it first")
+    input("Press Enter to continue...")
+
+    print("Is DDB table stosc_xero_member_payments updated? If not, please update it first")
+    input("Press Enter to continue...")
+
+    filename = f"{TABLE_NAME_MEMBER_PAYMENTS}_{YEAR_TO_GENERATE_REPORT_FOR}.csv"
+
+    df = get_df_from_ddb(table_name=TABLE_NAME_MEMBER_PAYMENTS)
+    df = lookup_member_code_from_contact_id(df)
+
+    df.to_csv(filename, index=False)
+    print(f"Downloaded {len(df)} rows to {filename} for {YEAR_TO_GENERATE_REPORT_FOR}")
