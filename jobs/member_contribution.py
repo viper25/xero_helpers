@@ -1,7 +1,8 @@
 """
-🔹To get a matrix of all the members contributions for the year (Excel output)
 🔹Scheduled job to update member payments in DDB
 🔹Scheduled job to add accounts of interest that needs to be monitored for totals in DDB
+
+By default updates accounts for current year. Deletes and re-inserts data for current year in DDB
 
 This does NOT include
 Invoice payments (i.e. member subscription payments)
@@ -47,9 +48,6 @@ WRITE_TO_CSV = False
 bank_accounts = {"DBS": "1000", "NETS": "1001", "Cash": "1002"}
 receive_txns = []
 received_payments = []
-tracking_categories = {
-    "'ce1b1125-b513-47de-9649-dd650f2b221e'": 'Parsonage 2022'
-}
 
 
 def get_chart_of_accounts():
@@ -68,7 +66,51 @@ def get_chart_of_accounts():
     return _out
 
 
-df_members = pd.read_csv(f"..\csv{os.sep}xero_contacts.csv")
+df_members = pd.read_csv(f"csv{os.sep}xero_contacts.csv")
+
+
+# =================================================================
+def delete_items_based_on_year(table_name, year_to_delete, ddb_resource):
+    ddb_resource
+    table = ddb_resource.Table(table_name)
+
+    scan_kwargs = {
+        'FilterExpression': "begins_with(AccountCode, :val)",
+        'ExpressionAttributeValues': {
+            ":val": str(year_to_delete)
+        }
+    }
+
+    done = False
+    start_key = None
+    deleted_count = 0
+
+    while not done:
+        # Check if we have a starting point for this iteration
+        if start_key:
+            scan_kwargs['ExclusiveStartKey'] = start_key
+
+        # Step 1: Scan the table for items with the desired 'year' attribute
+        response = table.scan(**scan_kwargs)
+
+        items_to_delete = response.get('Items', [])
+
+        # Step 2: Delete each of those items
+        for item in items_to_delete:
+            # print(f"Deleting item with ContactID: {item['ContactID']} and AccountCode: {item['AccountCode']}")
+            table.delete_item(
+                Key={
+                    'ContactID': item['ContactID'],
+                    'AccountCode': item['AccountCode']
+                }
+            )
+            deleted_count += 1
+
+        # Check for more items
+        start_key = response.get('LastEvaluatedKey', None)
+        done = start_key is None
+
+    print(color(f"Deleted {deleted_count} items from table {table_name} for year {year_to_delete}.", Colors.red))
 
 
 # =================================================================
@@ -81,6 +123,10 @@ def upload_member_tx_to_ddb(records: dict):
         region_name="ap-southeast-1",
     )
     table = resource.Table("stosc_xero_member_payments")
+
+    delete_items_based_on_year(table_name="stosc_xero_member_payments", year_to_delete=UPDATE_TX_FOR_YEAR,
+                               ddb_resource=resource)
+
     print(color(f"Inserting {len(records)} records to DDB: {table.name}", Colors.green))
     for record in records:
         chunk = {
@@ -335,7 +381,7 @@ numeric_only will default to False. Either specify numeric_only or select only c
 
 df_grouped = df_merged.groupby(
     ["ContactID", "ContactName", "MemberID", "AccountCode", "Account", "Year"]).sum().reset_index()
-print(color(df_grouped.sort_values(by=["ContactName"]).head(5), (200, 200, 200)))
+print(color(df_grouped.sort_values(by=["ContactName"]).head(5), Colors.white))
 if WRITE_TO_CSV:
     df_grouped.to_csv("csv\member_contributions_grouped.csv", index=True)
 # df_grouped.pivot_table(index=["ContactName","Account"]).to_csv('member_contributions_grouped-1.csv',index=True)
