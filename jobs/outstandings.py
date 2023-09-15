@@ -31,7 +31,7 @@ page = 0
 #     chunk = {
 #             "token": type,
 #             "data": str(data),
-#             "modfied_ts": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
+#             "modified_ts": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
 #         }
 #     table.put_item(Item=chunk)
 
