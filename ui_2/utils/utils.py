@@ -49,7 +49,7 @@ def __xero_get_Access_Token():
 
     # Set new refresh token
     chunk = {"token": REFRESH_TOKEN_KEY, 'refresh_token': current_refresh_token,
-             'modfied_ts': datetime.now().strftime("%d/%m/%Y %H:%M:%S")}
+             'modified_ts': datetime.now().strftime("%d/%m/%Y %H:%M:%S")}
     table.put_item(Item=chunk)
 
     return response_dict['access_token']

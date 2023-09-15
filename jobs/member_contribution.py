@@ -135,7 +135,7 @@ def upload_member_tx_to_ddb(records: dict):
             "AccountCode": f"{record['Year']}_{record['AccountCode']}",
             "Account": record["Account"],
             "LineAmount": Decimal(str(record["LineAmount"])),
-            "modfied_ts": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
+            "modified_ts": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
         }
         table.put_item(Item=chunk)
 
