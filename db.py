@@ -89,3 +89,14 @@ def get_email(member_code: str):
     sql = "select fam_Email from family_fam f where SUBSTRING(f.fam_Name,POSITION('(' IN f.fam_Name)+1,4) = %s"
     _result = __db_executeQuery(sql, Databases.CRM, True, member_code)
     return _result[0][0]
+
+def get_zip_lat_lon(member_code: str):
+    sql = "select fam_latitude, fam_longitude, fam_zip from family_fam f where SUBSTRING(f.fam_Name,POSITION('(' IN f.fam_Name)+1,4) = %s"
+    _result = __db_executeQuery(sql, Databases.CRM, True, member_code)
+    return _result[0][0], _result[0][1], _result[0][2]
+
+
+def update_lat_lon(memberCode, sla_lat, sla_lon):
+    sql = "update family_fam f set f.fam_latitude = %s, f.fam_longitude=%s where SUBSTRING(f.fam_Name,POSITION('(' IN f.fam_Name)+1,4) = %s"
+    _result = __db_executeQuery(sql, Databases.CRM, True, sla_lat, sla_lon, memberCode)
+    return _result
