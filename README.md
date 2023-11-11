@@ -59,7 +59,7 @@ Activate (on Windows):
 
 On linux: 
 ```bash
-source venv/Scripts/activate
+source .venv/Scripts/activate
 ```
 
 Install dependencies
