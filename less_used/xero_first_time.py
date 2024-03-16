@@ -1,5 +1,5 @@
 '''
-Get the TenantID and Tokens the FIRST tiem one uses Xero
+Get the TenantID and Tokens the FIRST time one uses Xero
 Refer to https://developer.xero.com/documentation/guides/oauth2/pkce-flow
 An easy alternative is https://github.com/XeroAPI/xoauth/releases/download/v1.1.0/xoauth_1.1.0_windows_amd64.tar.gz
 '''

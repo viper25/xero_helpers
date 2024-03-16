@@ -13,11 +13,10 @@ Principle: Loop through all members. For each member, check each invoice. Set el
 by checking invoices. The moment you can prove eligibility is False, break the loop and check the next member.
 """
 import datetime
-import utils
+from utils import utils
 
 # https://github.com/CodeForeverAndEver/ColorIt
 from colorit import *
-from datetime import datetime
 import pandas as pd
 from datetime import date, datetime
 from dateutil import relativedelta

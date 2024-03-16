@@ -1,7 +1,7 @@
 """
 To Replace all Invoices with another one
 """
-import utils
+from utils import utils
 # https://github.com/CodeForeverAndEver/ColorIt
 from colorit import *
 
@@ -34,7 +34,7 @@ for _contact in contacts1:
         url = f"https://api.xero.com/api.xro/2.0/Invoices?ContactIDs={_contactID}&Statuses=AUTHORISED"
         # Get Invoices Created only this year 
         _header = {'If-Modified-Since': utils.year_start()}
-        invoices = utils.xero_get(url,**_header)
+        invoices = utils.xero_get(url, **_header)
 
         for invoice in invoices['Invoices']:
             print(color(f"Customer ID: {_contact}",Colors.purple))
@@ -69,7 +69,7 @@ for _contact in contacts1:
 
                     print(color(f"Updating {invoice['InvoiceNumber']} to {new_invoice_data['InvoiceNumber']}",Colors.orange))
                     url = f"https://api.xero.com/api.xro/2.0/Invoices/{invoice['InvoiceID']}"
-                    rename_invoice_response =  utils.xero_post(url,new_invoice_data)
+                    rename_invoice_response =  utils.xero_post(url, new_invoice_data)
                     if rename_invoice_response.status_code == 200:
                         print(color("SUCCESS\n",Colors.green))
                     else:
@@ -83,7 +83,7 @@ for _contact in contacts1:
                         void_invoice_data['Status'] = 'VOIDED'
                         print(color(f"Voiding {void_invoice_data['InvoiceNumber']}",Colors.red))
                         url = f"https://api.xero.com/api.xro/2.0/Invoices/{void_invoice_data['InvoiceNumber']}"
-                        void_invoice_response =  utils.xero_post(url,void_invoice_data)
+                        void_invoice_response =  utils.xero_post(url, void_invoice_data)
                         if void_invoice_response.status_code == 200:
                             print(color("SUCCESS\n",Colors.green))
                         else:
@@ -96,7 +96,7 @@ for _contact in contacts1:
 
                         print(color(f"Creating {new_invoice_data['InvoiceNumber']}",Colors.blue))
                         url = f"https://api.xero.com/api.xro/2.0/Invoices/"
-                        create_invoice_response =  utils.xero_post(url,new_invoice_data)
+                        create_invoice_response =  utils.xero_post(url, new_invoice_data)
                         if create_invoice_response.status_code == 200:
                             print(color("SUCCESS\n",Colors.green))
                         else:

@@ -9,7 +9,7 @@ Use xoauth.exe to get an access token, plug that into xero_first_time.py and get
 
 from colorama import Fore, init
 import my_secrets
-import utils
+from utils import utils
 
 # initialize colorama
 init(autoreset=True)

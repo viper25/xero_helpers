@@ -3,7 +3,7 @@ Compare addresses between Xero and CRM systems
 '''
 import tomllib
 import db
-import utils
+from utils import utils
 from colorama import init, Fore
 
 init(autoreset=True)

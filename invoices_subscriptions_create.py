@@ -18,10 +18,9 @@ Manually check for pro-rated invoices and set to the proper Value.
 For FY22: M053, L008, N008, B025, M054 was pro-rated. Check CRM https://crm.stosc.com/churchcrm/v2/family/710
 """
 import tomllib
-import utils
+from utils import utils
 # https://github.com/CodeForeverAndEver/ColorIt
 from colorit import *
-
 
 with open("config.toml", "rb") as f:
     config = tomllib.load(f)
@@ -51,6 +50,7 @@ def create_xero_invoice(inv):
     else:
         print(color(f"{response.json()['Elements'][0]['ValidationErrors'][0]['Message']}", Colors.red))
         return None
+
 
 # Initialize variables
 new_invoice_data = {}
@@ -94,7 +94,7 @@ with open(csv_file, "r") as f:
 
                 # Add the Line Item to the Invoice
                 new_invoice_data["LineItems"].append(lineItems)
-                
+
                 # Create the Invoice
                 invoice = None
                 invoice = create_xero_invoice(new_invoice_data)

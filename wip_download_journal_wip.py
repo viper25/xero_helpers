@@ -1,6 +1,4 @@
-
-import requests
-import utils
+from utils import utils
 # https://github.com/CodeForeverAndEver/ColorIt
 from colorit import *
 
@@ -20,7 +18,7 @@ def save_journals(_journals):
 url = f"https://api.xero.com/api.xro/2.0/Journals"
 # Get Invoices Created only this year 
 _header = {'If-Modified-Since': utils.year_start()}
-journals = utils.xero_get(url,**_header)
+journals = utils.xero_get(url, **_header)
 
 filtered_journals = filter_journal(journals)
 

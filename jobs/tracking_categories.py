@@ -2,7 +2,7 @@
 🔹Scheduled job to add accounts of interest that needs to be monitored for totals in DDB
 """
 
-import utils
+from utils import utils
 from colorit import *
 import boto3
 from decimal import Decimal

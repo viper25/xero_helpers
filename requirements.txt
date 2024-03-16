@@ -9,5 +9,6 @@ mysql-connector-python
 pendulum
 # Menu 
 tabulate
-pyinstaller #Build Windows exe
+# pyinstaller #Build Windows exe
 colorama
+tkcalendar
