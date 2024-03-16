@@ -6,7 +6,7 @@ import boto3
 import requests
 from boto3.dynamodb.conditions import Key
 
-import my_secrets
+from jobs import my_secrets
 
 # TODO Hardcoded Tenant ID
 xero_tenant_id = my_secrets.xero_tenant_ID

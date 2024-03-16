@@ -160,7 +160,7 @@ def get_member_ID(_contact_ID):
     if len(df_members.loc[df_members['ContactID'] == _contact_ID]) == 0:
         _member_code = 'NA'
     else:
-        _member_code = df_members.loc[df_members['ContactID'] == _contact_ID].iloc[0][0]
+        _member_code = df_members.loc[df_members['ContactID'] == _contact_ID].iloc[0].iloc[0]
     return _member_code
 
 
@@ -280,18 +280,18 @@ def insert_df_to_crm_db(df):
 def align_columns_to_pledge_plg_table(df):
     engine = create_engine(f'mysql+pymysql://{USER}:{PASSWORD}@{HOST}/stosc_churchcrm')
 
-    def populate_family_ids():
+    def get_family_ids():
         sql = "SELECT fam_ID, LEFT(RIGHT(fam_Name,5),4) as memberCode, fam_Name FROM family_fam where fam_DateDeactivated is NULL"
         x = pd.read_sql(sql, engine)
         return x
 
-    def populate_fund_ids():
+    def get_fund_ids():
         sql = "SELECT fun_ID, fun_Name FROM donationfund_fun where fun_Active = TRUE"
         x = pd.read_sql(sql, engine)
         return x
 
-    crm_family_ids = populate_family_ids()
-    crm_fund_ids = populate_fund_ids()
+    crm_family_ids = get_family_ids()
+    crm_fund_ids = get_fund_ids()
 
     crm_pledge_plg_db_columns = ['plg_FamID', 'plg_FYID', 'plg_date', 'plg_amount', 'plg_schedule', 'plg_method',
                                  'plg_comment', 'plg_DateLastEdited', 'plg_EditedBy', 'plg_PledgeOrPayment',
@@ -368,9 +368,10 @@ accounts_lookup = pd.DataFrame(get_chart_of_accounts())
 s = accounts_lookup.set_index("AccountCode")["label"]
 df_merged["Account"] = df_merged["AccountCode"].map(s)
 
-# Update CRM DB Pledge tables
-df_pledge_plg = align_columns_to_pledge_plg_table(df_merged)
-insert_df_to_crm_db(df_pledge_plg)
+# Update CRM DB Pledge tables with subscription info from Xero.
+# (We shouldn't do it this way; CRM must be the Golden source of truth)
+# df_pledge_plg = align_columns_to_pledge_plg_table(df_merged)
+# insert_df_to_crm_db(df_pledge_plg)
 
 # Group by Contacts to show all payments from a member
 '''
@@ -388,9 +389,9 @@ if WRITE_TO_CSV:
 
 # Ref: https://pbpython.com/pandas-pivot-table-explained.html
 # Pivot to show all Accounts in cols
-# The values column automatically averages the data so should change to sum.
+# The values column automatically averages the data so should change to sum
 df_pivoted = df_grouped.pivot_table(index=["ContactName", "Year", "MemberID"], columns="Account", values="LineAmount",
-                                    aggfunc=np.sum, fill_value=0)
+                                    aggfunc="sum", fill_value=0)
 if WRITE_TO_CSV:
     df_pivoted.to_csv("csv\member_contributions_pivoted.csv", index=True)
 

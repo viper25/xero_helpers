@@ -19,7 +19,7 @@ import tomllib
 # https://github.com/CodeForeverAndEver/ColorIt
 from colorit import *
 
-import my_secrets
+from jobs import my_secrets
 from utils import utils
 
 # Use this to ensure that ColorIt will be usable by certain command line interfaces

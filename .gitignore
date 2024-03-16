@@ -134,7 +134,7 @@ dmypy.json
 *.env
 
 # Tokens & Secrets
-my_secrets.py
+jobs/my_secrets.py
 contacts.txt
 
 # VS Code setings
