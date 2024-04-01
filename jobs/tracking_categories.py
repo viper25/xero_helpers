@@ -2,7 +2,7 @@
 🔹Scheduled job to add accounts of interest that needs to be monitored for totals in DDB
 """
 
-from utils import utils
+import utils
 from colorit import *
 import boto3
 from decimal import Decimal
@@ -98,6 +98,8 @@ def update_tracked_accounts_for_member_payments():
 
 def check_tracking_categories(txns_with_tracking_options):
     for txn in txns_with_tracking_options:
+        if txn['Status'] == 'DELETED':
+            continue
         for lineItem in txn["LineItems"]:
             # Check if each transaction's (Invoice or payments) line item has any tracking categories
             for lineItem_Tracking in lineItem["Tracking"]:
