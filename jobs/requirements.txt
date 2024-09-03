@@ -3,3 +3,4 @@ requests
 color-it
 boto3
 pandas
+sqlalchemy
