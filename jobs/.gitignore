@@ -1,0 +1,5 @@
+config.toml
+*.log
+*.bkp
+*.env
+my_secrets.py
