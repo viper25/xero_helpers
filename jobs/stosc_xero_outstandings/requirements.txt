@@ -1,0 +1,5 @@
+colorama
+pandas
+requests
+boto3 # Needed in utils
+tomli
