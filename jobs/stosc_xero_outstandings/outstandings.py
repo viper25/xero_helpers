@@ -1,5 +1,5 @@
 """
-🔹Get the total Receiveables by year
+🔹Get the total Receivables by year
 🔹Get the total Outstanding by year
 
 as of a certain date
@@ -62,7 +62,7 @@ while has_more_pages:
                 temp_df = pd.DataFrame([{'Inv': x, 'Total': invoice['Total'], 'Due': invoice['AmountDue']}])
                 df = pd.concat([df,temp_df], ignore_index=True)            
             else:
-                raise 
+                raise Exception
 
 df_grouped = df.groupby('Inv').sum()
 # df_grouped['%'] = df_grouped.apply(lambda x: x['Due']/x['Total'] * 100 if x['Total']!=0 else 0, axis=1)

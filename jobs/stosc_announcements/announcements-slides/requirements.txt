@@ -1,0 +1,12 @@
+requests
+python-dotenv
+pygsheets
+pandas
+spacy
+python-pptx
+google-auth
+google-auth-oauthlib
+google-auth-httplib2
+google-api-python-client
+pendulum
+mysql-connector-python

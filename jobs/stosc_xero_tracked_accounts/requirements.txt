@@ -1,0 +1,3 @@
+color-it
+boto3
+requests

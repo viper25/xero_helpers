@@ -1,0 +1,36 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.env
+.venv
+config
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+logs/
+output/
+.vscode/
+
+# Database
+sql_app.db
+db_data/postgresql
+
+# IDE
+.idea/
+.coverage
+coverage.xml
+
+# Azure Container Specs
+carnival-api*.yaml
+# Build script variables
+env.sh
+
+# auth
+*.pkl
+google_service_account.json
+
