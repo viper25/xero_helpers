@@ -48,7 +48,7 @@ def __db_executeQuery(sql: str, prepared=False, *args):
 
 
 def get_birthdays(duration: str = 'w')->models.NamesList:
-    today = pendulum.now()
+    today = pendulum.now("Asia/Singapore")
     if (duration.lower()) == "d":
         start = today.strftime("%Y%m%d")
         end = today.strftime("%Y%m%d")
@@ -67,7 +67,7 @@ def get_birthdays(duration: str = 'w')->models.NamesList:
 
 # ----------------------------------------------------------------------------------------------------------------------
 def get_anniversaries(duration: str = 'w')->models.NamesList:
-    today = pendulum.now()
+    today = pendulum.now("Asia/Singapore")
     if (duration.lower()) == "d":
         start = today.strftime("%Y%m%d")
         end = today.strftime("%Y%m%d")

@@ -82,7 +82,7 @@ if obituary_data:
 
 # Save the presentation
 file_name = f'output/Announcements'
-time_string = pendulum.now().strftime("%Y%m%d_%H%M%S")
+time_string = pendulum.now("Asia/Singapore").strftime("%Y%m%d_%H%M%S")
 try:
     prs.save(f"{file_name}_{time_string}.pptx")
     # TODO Change to logging

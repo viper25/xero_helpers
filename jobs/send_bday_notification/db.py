@@ -57,7 +57,8 @@ def __db_executeQuery(sql: str, prepared=False, *args):
 
 
 def get_bday(duration: str = 'w'):
-    today = pendulum.now()
+    today = pendulum.now("Asia/Singapore")
+    print(color(f"Today: {today}", Colors.green))
     if (duration.lower()) == "d":
         start = today.strftime("%Y%m%d")
         end = today.strftime("%Y%m%d")
@@ -72,7 +73,7 @@ def get_bday(duration: str = 'w'):
 
 
 def get_anniversaries(duration: str = 'w'):
-    today = pendulum.now()
+    today = pendulum.now("Asia/Singapore")
     if (duration.lower()) == "d":
         start = today.strftime("%Y%m%d")
         end = today.strftime("%Y%m%d")
